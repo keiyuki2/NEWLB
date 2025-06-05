@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evade Competitive Leaderboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'brand-primary': '#7C3AED', // Purple
+            'brand-secondary': '#DB2777', // Pink
+            'brand-accent': '#F59E0B', // Amber
+            'dark-bg': '#0A0A0A', // Much Darker Gray for main page background
+            'dark-surface': '#000000', // Pure Black for cards/boxes and pitch-black inputs
+            'dark-border': '#2d2d2d', 
+            'dark-header': '#000000', 
+            'button-active': '#238636', 
+            'bright-blue-check': '#38BDF8', 
+            'tier1': '#FFD700', 
+            'tier2': '#C0C0C0', 
+            'tier3': '#CD7F32', 
+            'tier4': '#A0AEC0', 
+            'tier5': '#718096', 
+          },
+          typography: (theme) => ({ // Typography plugin styles can be defined here if needed directly
+            DEFAULT: {
+              css: {
+                '--tw-prose-body': theme('colors.gray[300]'),
+                '--tw-prose-headings': theme('colors.gray[100]'),
+                '--tw-prose-lead': theme('colors.gray[400]'),
+                '--tw-prose-links': theme('colors.brand-primary'),
+                '--tw-prose-bold': theme('colors.gray[100]'),
+                '--tw-prose-counters': theme('colors.gray[400]'),
+                '--tw-prose-bullets': theme('colors.gray[600]'),
+                '--tw-prose-hr': theme('colors.dark-border'),
+                '--tw-prose-quotes': theme('colors.gray[200]'),
+                '--tw-prose-quote-borders': theme('colors.brand-secondary'),
+                '--tw-prose-captions': theme('colors.gray[400]'),
+                '--tw-prose-code': theme('colors.pink[300]'),
+                '--tw-prose-pre-code': theme('colors.pink[300]'),
+                '--tw-prose-pre-bg': theme('colors.black'), 
+                '--tw-prose-th-borders': theme('colors.dark-border'),
+                '--tw-prose-td-borders': theme('colors.dark-border'),
+              },
+            },
+            invert: { 
+              css: {
+                '--tw-prose-body': theme('colors.gray[300]'),
+                '--tw-prose-headings': theme('colors.gray[100]'),
+              },
+            },
+          }),
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'modal-enter': 'modal-enter 0.2s ease-out forwards',
+            'sparkle-once': 'sparkle-emit 1.2s ease-out forwards', // Generic sparkle
+            'wr-card-sparkle': 'wr-card-sparkle-effect 1.5s ease-out forwards', // More pronounced sparkle for WR card
+            'stat-pulse': 'stat-pulse 1.2s ease-out forwards',
+            'carousel-card-active-enter': 'carousel-card-active-enter 0.7s ease-out forwards', // Matched duration
+            'carousel-card-preview-enter-left': 'carousel-card-preview-enter-left 0.7s ease-out forwards', // Matched duration
+            'carousel-card-preview-enter-right': 'carousel-card-preview-enter-right 0.7s ease-out forwards', // Matched duration
+            'card-glow': 'card-glow-pulse 2.5s infinite alternate ease-in-out',
+            'bg-pan': 'bg-pan-effect 15s linear infinite alternate',
+            'active-to-left-preview': 'active-to-left-preview-kf 0.7s ease-out forwards',
+            'active-to-right-preview': 'active-to-right-preview-kf 0.7s ease-out forwards',
+            'left-preview-to-active': 'left-preview-to-active-kf 0.7s ease-out forwards',
+            'right-preview-to-active': 'right-preview-to-active-kf 0.7s ease-out forwards',
+            'toast-in': 'toast-in 0.5s ease-out forwards',
+            'toast-out': 'toast-out 0.5s ease-in forwards',
+            // achievement-toast animations removed
+          },
+          keyframes: {
+            'modal-enter': {
+              '0%': { opacity: '0', transform: 'translateY(-20px) scale(0.95)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+            },
+            'sparkle-emit': { 
+              '0%': { opacity: '0.3', transform: 'scale(0.3) translateY(10px) rotate(0deg)' },
+              '30%': { opacity: '1', transform: 'scale(1.1) translateY(-5px) rotate(15deg)' },
+              '100%': { opacity: '0', transform: 'scale(0.2) translateY(-15px) rotate(-10deg) translateX(5px)' },
+            },
+            'wr-card-sparkle-effect': { 
+              '0%': { opacity: '0.5', transform: 'scale(0.4) rotate(0deg)' },
+              '50%': { opacity: '1', transform: 'scale(1.2) rotate(180deg)' },
+              '100%': { opacity: '0', transform: 'scale(0.3) rotate(360deg)' },
+            },
+            'stat-pulse': {
+              '0%': { transform: 'scale(1)', opacity: 0.9 },
+              '50%': { transform: 'scale(1.1) translateY(-2px)', opacity: 1 },
+              '100%': { transform: 'scale(1)', opacity: 1 },
+            },
+             'carousel-card-active-enter': { 
+              '0%': { transform: 'scale(0.85) translateY(20px)', opacity: '0', filter: 'blur(4px)' },
+              '100%': { transform: 'scale(1) translateY(0)', opacity: '1', filter: 'blur(0px)' },
+            },
+            'carousel-card-preview-enter-left': { 
+              '0%': { transform: 'translateX(-80%) scale(0.65) opacity(0)', filter: 'blur(4px)' }, 
+              '100%': { transform: 'translateX(-55%) scale(0.75) opacity(0.7)', filter: 'blur(2px)' }, 
+            },
+            'carousel-card-preview-enter-right': { 
+              '0%': { transform: 'translateX(80%) scale(0.65) opacity(0)', filter: 'blur(4px)' }, 
+              '100%': { transform: 'translateX(55%) scale(0.75) opacity(0.7)', filter: 'blur(2px)' }, 
+            },
+            'card-glow-pulse': {
+              '0%': { boxShadow: '0 0 15px -5px rgba(219, 39, 119, 0.4)' },
+              '100%': { boxShadow: '0 0 35px 8px rgba(219, 39, 119, 0.7)' },
+            },
+            'bg-pan-effect': {
+              '0%': { backgroundPosition: '0% 50%' },
+              '100%': { backgroundPosition: '100% 50%' },
+            },
+            'active-to-left-preview-kf': {
+              '0%': { transform: 'translateX(0%) scale(1) opacity(1) filter: blur(0px)', zIndex: 20 },
+              '100%': { transform: 'translateX(-55%) scale(0.75) opacity(0.7) filter: blur(2px)', zIndex: 10  },
+            },
+            'active-to-right-preview-kf': {
+              '0%': { transform: 'translateX(0%) scale(1) opacity(1) filter: blur(0px)', zIndex: 20 },
+              '100%': { transform: 'translateX(55%) scale(0.75) opacity(0.7) filter: blur(2px)', zIndex: 10 },
+            },
+            'left-preview-to-active-kf': {
+              '0%': { transform: 'translateX(-55%) scale(0.75) opacity(0.7) filter: blur(2px)', zIndex: 10  },
+              '100%': { transform: 'translateX(0%) scale(1) opacity(1) filter: blur(0px)', zIndex: 20 },
+            },
+            'right-preview-to-active-kf': {
+              '0%': { transform: 'translateX(55%) scale(0.75) opacity(0.7) filter: blur(2px)', zIndex: 10 },
+              '100%': { transform: 'translateX(0%) scale(1) opacity(1) filter: blur(0px)', zIndex: 20 },
+            },
+            'toast-in': {
+              '0%': { opacity: '0', transform: 'translateY(-100%)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+            'toast-out': {
+              '0%': { opacity: '1', transform: 'translateY(0)' },
+              '100%': { opacity: '0', transform: 'translateY(-100%)' },
+            },
+            // achievement-toast keyframes removed
+          },
+          boxShadow: {
+            'glow-tier1': '0 0 15px 5px rgba(255, 215, 0, 0.7)',
+            'glow-tier2': '0 0 15px 5px rgba(192, 192, 192, 0.7)',
+            'glow-tier3': '0 0 15px 5px rgba(205, 127, 50, 0.7)',
+            'wr-card-active': '0 0 35px 10px rgba(219, 39, 119, 0.5)', 
+            'wr-card-subtle-glow': '0 0 15px 2px rgba(192, 72, 255, 0.4)', 
+            'admin-stat-card': '0 4px 6px -1px rgba(255,255,255,0.03), 0 2px 4px -1px rgba(255,255,255,0.03)',
+          },
+          textShadow: { 
+            'glow': '0 0 8px rgba(255, 255, 255, 0.5), 0 0 12px rgba(219, 39, 119, 0.3)',
+            'lg': '0 2px 10px rgba(0,0,0,0.5)'
+          }
+        }
+      },
+       plugins: [
+        function ({ addUtilities, theme }) {
+          const newUtilities = {
+            '.text-shadow-glow': {
+              textShadow: theme('textShadow.glow'),
+            },
+            '.text-shadow-lg': {
+                textShadow: theme('textShadow.lg'),
+            },
+            '.command-bar-input::placeholder': {
+              color: theme('colors.gray.600'),
+              fontStyle: 'italic',
+            },
+            '.command-bar-input:focus': {
+              outline: 'none',
+              borderColor: theme('colors.brand.primary'),
+              boxShadow: `0 0 0 2px ${theme('colors.brand.primary')}`,
+            }
+          }
+          addUtilities(newUtilities, ['responsive', 'hover', 'focus'])
+        }
+      ]
+    }
+  </script>
+<style>
+  .world-records-page-container::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: linear-gradient(to bottom right, #1a001a, #0d000d);
+    background-size: cover;
+    background-position: center;
+    filter: blur(12px) brightness(0.6); 
+    z-index: 0; 
+    opacity: 0.7;
+  }
+  .diagonal-stripes {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.02), 
+      rgba(255, 255, 255, 0.02) 8px, 
+      transparent 8px,
+      transparent 16px 
+    );
+  }
+  .animated-gradient-bg { 
+    background: linear-gradient(135deg, #4f0042, #7c006b, #a01087, #db2777); 
+    background-size: 300% 300%; 
+    animation: bg-pan-effect 12s ease-in-out infinite alternate;
+  }
+  .animated-gradient-bg-variant1 { 
+    background: linear-gradient(135deg, #003973, #005C97, #1A2980, #26D0CE);
+    background-size: 300% 300%;
+    animation: bg-pan-effect 14s ease-in-out infinite alternate; 
+  }
+  .animated-gradient-bg-variant2 { 
+    background: linear-gradient(135deg, #0f2027, #1D2B3A, #2c5364, #3E8948);
+    background-size: 300% 300%;
+    animation: bg-pan-effect 16s ease-in-out infinite alternate; 
+  }
+
+  /* Global Announcement Toast Styles */
+  .global-toast-container {
+    position: fixed;
+    top: 1rem; /* Adjust based on nav height */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000; /* High z-index */
+    width: 90%;
+    max-width: 600px;
+    pointer-events: none; /* Container itself shouldn't block clicks */
+  }
+  .global-toast {
+    pointer-events: all; /* Toast itself should be clickable */
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+  }
+  .global-toast.toast-entering {
+    animation-name: toast-in;
+  }
+  .global-toast.toast-exiting {
+    animation-name: toast-out;
+  }
+
+  /* Admin Stat Card Styles */
+  .admin-stat-card {
+    background-color: #111827; /* Slightly lighter than pure black */
+    border-radius: 0.75rem; /* rounded-xl */
+    padding: 1.25rem; /* p-5 */
+    box-shadow: theme('boxShadow.admin-stat-card');
+    transition: all 0.2s ease-in-out;
+  }
+  .admin-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.15), 0 4px 6px -2px rgba(124, 58, 237, 0.1); /* Purple glow on hover */
+  }
+  .admin-stat-card-icon {
+    background-color: rgba(124, 58, 237, 0.15); /* brand-primary with opacity */
+    color: #a78bfa; /* Lighter purple for icon */
+  }
+
+  /* Achievement Toast Styles Removed */
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.6.2",
+    "react-markdown": "https://esm.sh/react-markdown@^10.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-dark-bg text-gray-100 antialiased">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
