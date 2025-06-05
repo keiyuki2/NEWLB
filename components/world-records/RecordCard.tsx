@@ -16,12 +16,6 @@ const formatRecordValue = (type: WorldRecord['type'], value: number): string => 
         const seconds = value % 60;
         return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s`;
     }
-    if (type === WorldRecordType.ECONOMY_MONEY_MATCH) {
-        return `$${value.toLocaleString()}`;
-    }
-    if (type === WorldRecordType.ECONOMY_POINTS_MATCH) {
-        return `${value.toLocaleString()} pts`;
-    }
     if (type === WorldRecordType.COSMETICS_UNUSUALS_TOTAL || type === WorldRecordType.COSMETICS_ACCESSORIES_TOTAL) {
         return `${value.toLocaleString()} items`;
     }
@@ -30,7 +24,6 @@ const formatRecordValue = (type: WorldRecord['type'], value: number): string => 
 
 const getRecordIcon = (type: WorldRecordType) => {
     if (type.startsWith(LeaderboardCategory.SPEED)) return "fas fa-stopwatch";
-    if (type.startsWith(LeaderboardCategory.ECONOMY)) return "fas fa-coins";
     if (type.startsWith(LeaderboardCategory.COSMETICS)) return "fas fa-gem";
     if (type === WorldRecordType.LONGEST_SURVIVAL_ANY) return "fas fa-shield-alt";
     return "fas fa-trophy";

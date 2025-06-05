@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Player } from '../../types';
 import { TIER_STYLES } from '../../constants';
@@ -51,12 +52,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, rank }) => {
             )}
           </div>
         </div>
-        <div className="text-right space-y-0.5 min-w-[100px]"> {/* Increased min-width slightly */}
+        <div className="text-right space-y-0.5 min-w-[100px]">
           <p className="text-xs text-gray-400">
             <i className="fas fa-stopwatch mr-1 opacity-60"></i>{formatTime(player.stats.speedNormal)} (N)
-          </p>
-          <p className="text-xs text-gray-400">
-            <i className="fas fa-coins mr-1 opacity-60"></i>${formatNumber(player.stats.economyMoney)}
           </p>
           <p className="text-xs text-gray-400">
             <i className="fas fa-gem mr-1 opacity-60"></i>{formatNumber(player.stats.cosmeticsUnusuals)} (U)

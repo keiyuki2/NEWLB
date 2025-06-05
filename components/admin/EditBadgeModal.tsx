@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Input, TextArea } from '../ui/Input';
@@ -28,8 +29,9 @@ export const EditBadgeModal: React.FC<EditBadgeModalProps> = ({ isOpen, onClose,
   const [iconClass, setIconClass] = useState(badge.iconClass);
   const [colorClass, setColorClass] = useState(badge.colorClass);
   const [unlockCriteria, setUnlockCriteria] = useState(badge.unlockCriteria);
-  const [value, setValue] = useState(badge.value);
+  const [value, setValue] = useState(badge.value ?? 0); 
   const [category, setCategory] = useState<BadgeCategory>(badge.category);
+  const [isVisible, setIsVisible] = useState(badge.isVisible !== undefined ? badge.isVisible : true);
   const [selectedColorTagId, setSelectedColorTagId] = useState<string>(badge.colorTagId || '');
   
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,9 @@ export const EditBadgeModal: React.FC<EditBadgeModalProps> = ({ isOpen, onClose,
         setIconClass(badge.iconClass);
         setColorClass(badge.colorClass);
         setUnlockCriteria(badge.unlockCriteria);
-        setValue(badge.value);
+        setValue(badge.value ?? 0);
         setCategory(badge.category);
+        setIsVisible(badge.isVisible !== undefined ? badge.isVisible : true); // Default to true if undefined
         setSelectedColorTagId(badge.colorTagId || '');
         setError(null);
     }
@@ -59,8 +62,8 @@ export const EditBadgeModal: React.FC<EditBadgeModalProps> = ({ isOpen, onClose,
       setIsLoading(false);
       return;
     }
-    if (value <= 0) {
-      setError("Badge value must be a positive number.");
+    if (value < 0) { 
+      setError("Badge value must be a non-negative number.");
       setIsLoading(false);
       return;
     }
@@ -72,9 +75,12 @@ export const EditBadgeModal: React.FC<EditBadgeModalProps> = ({ isOpen, onClose,
         iconClass, 
         colorClass, 
         unlockCriteria, 
-        value, 
-        category, 
-        colorTagId: selectedColorTagId || undefined 
+        value: value, // Can be 0
+        category,
+        isVisible, 
+        colorTagId: selectedColorTagId || undefined,
+        // Ensure usernameColorUnlock is passed if it exists on the original badge, or handle its editability
+        usernameColorUnlock: badge.usernameColorUnlock 
       });
       onClose();
     } catch (err) {
@@ -108,8 +114,24 @@ export const EditBadgeModal: React.FC<EditBadgeModalProps> = ({ isOpen, onClose,
         <Input label="Font Awesome Icon Class" value={iconClass} onChange={e => setIconClass(e.target.value)} required disabled={isLoading} />
         <Input label="Tailwind Color Class" value={colorClass} onChange={e => setColorClass(e.target.value)} required disabled={isLoading} />
         <TextArea label="Unlock Criteria" value={unlockCriteria} onChange={e => setUnlockCriteria(e.target.value)} disabled={isLoading} />
-        <Input label="Badge Value (Points)" type="number" value={value.toString()} onChange={e => setValue(parseInt(e.target.value, 10) || 0)} required disabled={isLoading} />
+        <Input label="Badge Value (Points, 0 for no points)" type="number" value={value.toString()} onChange={e => setValue(parseInt(e.target.value, 10) || 0)} min="0" required disabled={isLoading} />
         
+        <div className="flex items-center space-x-3">
+            <label htmlFor="badgeEditIsVisible" className="text-sm text-gray-300">Publicly Visible:</label>
+            <input
+                type="checkbox"
+                id="badgeEditIsVisible"
+                checked={isVisible}
+                onChange={(e) => setIsVisible(e.target.checked)}
+                className="h-4 w-4 text-brand-primary bg-dark-bg border-dark-border rounded focus:ring-brand-primary"
+                disabled={isLoading}
+                aria-describedby="editIsVisibleHelp"
+            />
+            <span id="editIsVisibleHelp" className="text-xs text-gray-500">
+                (Uncheck for staff/hidden badges)
+            </span>
+        </div>
+
         <Select
           label="Link Username Color Tag (Optional)"
           options={usernameTagOptions}

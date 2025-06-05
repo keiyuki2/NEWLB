@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import { Input, TextArea } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
-import { LeaderboardCategory, SpeedSubCategory, EconomySubCategory, CosmeticsSubCategory, StatUpdateProofData } from '../../types';
+import { LeaderboardCategory, SpeedSubCategory, CosmeticsSubCategory, StatUpdateProofData } from '../../types';
 import { Alert } from '../ui/Alert';
 import { STAT_UPDATE_CATEGORY_OPTIONS, STAT_UPDATE_SUBCATEGORY_OPTIONS, MAP_NAME_OPTIONS, STAT_METRIC_UNITS } from '../../constants';
 
@@ -63,10 +63,10 @@ const SubmitProofForm: React.FC = () => {
         setError("Image proof must be less than 2MB.");
         setImageProof(null);
         setImageProofName('');
-        e.target.value = ''; // Reset file input
+        e.target.value = ''; 
         return;
       }
-      setError(null); // Clear previous error if new file is valid
+      setError(null); 
       setImageProof(file);
       setImageProofName(file.name);
     } else {
@@ -104,17 +104,17 @@ const SubmitProofForm: React.FC = () => {
       const submissionData: StatUpdateProofData = {
         playerId: currentUser.id,
         category,
-        subCategory: subCategory as SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory,
+        subCategory: subCategory as SpeedSubCategory | CosmeticsSubCategory,
         mapName: category === LeaderboardCategory.SPEED ? mapName : undefined,
         newValue: numericValue,
         videoProofUrl,
-        imageProofName: imageProof ? imageProof.name : undefined, // Store filename, actual upload handled by backend
+        imageProofName: imageProof ? imageProof.name : undefined, 
         notes,
       };
-      submitStatUpdateProof(submissionData); // This is a frontend mock, actual image upload needs backend
+      submitStatUpdateProof(submissionData); 
       setSuccess("Your proof has been submitted for review! You will be notified once it's processed.");
       setNewValue(''); setVideoProofUrl(''); setImageProof(null); setImageProofName(''); setNotes('');
-      setCategory(LeaderboardCategory.SPEED); // Reset to default
+      setCategory(LeaderboardCategory.SPEED); 
     } catch (err) {
       setError("An error occurred during submission. Please try again.");
       console.error("Proof submission error:", err);
@@ -124,14 +124,10 @@ const SubmitProofForm: React.FC = () => {
   };
   
   const valueUnits = STAT_METRIC_UNITS[category]?.[subCategory as keyof (typeof STAT_METRIC_UNITS)[LeaderboardCategory]] || "";
-  let valuePlaceholder = `e.g., ${category === LeaderboardCategory.SPEED ? '120 (for 2m 0s)' : '50000'}`;
+  let valuePlaceholder = `e.g., ${category === LeaderboardCategory.SPEED ? '120 (for 2m 0s)' : '50'}`; 
   if (valueUnits) {
     if (category === LeaderboardCategory.SPEED && valueUnits === "seconds") {
         valuePlaceholder = `e.g., 115 (total seconds for 1m 55s)`;
-    } else if (category === LeaderboardCategory.ECONOMY && subCategory === EconomySubCategory.MONEY) {
-        valuePlaceholder = `e.g., 75000 (for $75,000)`;
-    } else if (category === LeaderboardCategory.ECONOMY && subCategory === EconomySubCategory.POINTS) {
-        valuePlaceholder = `e.g., 1200 (for 1,200 points)`;
     } else if (category === LeaderboardCategory.COSMETICS) {
         valuePlaceholder = `e.g., 5 (for 5 items)`;
     } else {
@@ -143,7 +139,6 @@ const SubmitProofForm: React.FC = () => {
   const getCategoryDescription = () => {
     switch(category) {
         case LeaderboardCategory.SPEED: return "For runs measuring completion time. 'Normal' for standard gameplay, 'Glitched' for runs using exploits/bugs.";
-        case LeaderboardCategory.ECONOMY: return "For tracking in-game currency. Select 'Money' or 'Points' earned.";
         case LeaderboardCategory.COSMETICS: return "For the total number of 'Unusuals' or 'Accessories' owned.";
         default: return "";
     }
@@ -153,6 +148,10 @@ const SubmitProofForm: React.FC = () => {
     if (category === LeaderboardCategory.SPEED) {
         if (subCategory === SpeedSubCategory.NORMAL) return "Standard gameplay, no major bugs or unintended exploits.";
         if (subCategory === SpeedSubCategory.GLITCHED) return "Runs where exploits, bugs, and unintended game mechanics are permitted.";
+    }
+    if (category === LeaderboardCategory.COSMETICS) {
+        if (subCategory === CosmeticsSubCategory.UNUSUALS) return "Total count of unique unusual items.";
+        if (subCategory === CosmeticsSubCategory.ACCESSORIES) return "Total count of unique accessory items.";
     }
     return "";
   }
@@ -217,7 +216,7 @@ const SubmitProofForm: React.FC = () => {
             required
             disabled={!currentUser || isLoading}
         />
-         <p className="text-xs text-gray-400 mt-1 pl-1">Enter the exact value achieved (e.g., total seconds for time, total amount for currency/items).</p>
+         <p className="text-xs text-gray-400 mt-1 pl-1">Enter the exact value achieved (e.g., total seconds for time, total amount for items).</p>
       </div>
       
       <div>

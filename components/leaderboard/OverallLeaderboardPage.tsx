@@ -13,8 +13,6 @@ import { getCategoryFromWorldRecordType } from '../../constants';
 interface OverallPlayerScore {
   player: Player;
   overallScore: number;
-  // Optional: For detailed breakdown display later
-  // breakdown: Record<WorldRecordType, { rank: number, points: number, value: number } | undefined>;
 }
 
 const getPlacementPoints = (rank: number): number => {
@@ -39,10 +37,10 @@ export const OverallLeaderboardPage: React.FC = () => {
     const verifiedRecords = allWorldRecords.filter(r => r.isVerified);
     const recordTypes = [...new Set(verifiedRecords.map(r => r.type))];
     
-    const playerScores: Record<string, { totalPoints: number; /* breakdown: OverallPlayerScore['breakdown'] */ }> = {};
+    const playerScores: Record<string, { totalPoints: number; }> = {};
 
     allPlayers.forEach(p => {
-        playerScores[p.id] = { totalPoints: 0, /* breakdown: {} as OverallPlayerScore['breakdown'] */ };
+        playerScores[p.id] = { totalPoints: 0 };
     });
 
     recordTypes.forEach(type => {
@@ -75,16 +73,16 @@ export const OverallLeaderboardPage: React.FC = () => {
         if (recordCategory && leaderboardWeights[recordCategory] !== undefined) {
           weightedPoints = basePoints * (leaderboardWeights[recordCategory] / 100);
         } else if (recordCategory) {
-          // This case should ideally not be hit if leaderboardWeights is comprehensive for SPEED, ECONOMY, COSMETICS
-          console.warn(`Weight definition missing for category: ${recordCategory} (for WR type ${type}). This category contributes 0 points to overall score.`);
+          // This handles cases where a WR type maps to a category that doesn't have a weight (e.g. if we add a new category but don't assign weight)
+          console.warn(`Weight definition missing or 0 for category: ${recordCategory} (for WR type ${type}). This category contributes 0 points to overall score.`);
           weightedPoints = 0;
+        } else {
+          // This handles WR types that don't map to any weighted category (e.g., LONGEST_SURVIVAL_ANY)
+           weightedPoints = 0; // Explicitly 0 if no category mapping
         }
-        // If recordCategory is null (e.g., LONGEST_SURVIVAL_ANY), weightedPoints remains 0 as it's not mapped to a weighted category.
         
         if (playerScores[scoreEntry.playerId] && weightedPoints > 0) {
           playerScores[scoreEntry.playerId].totalPoints += weightedPoints;
-          // For detailed breakdown if needed later:
-          // playerScores[scoreEntry.playerId].breakdown[type] = { rank, points: weightedPoints, value: scoreEntry.value };
         }
       });
     });
@@ -96,7 +94,6 @@ export const OverallLeaderboardPage: React.FC = () => {
         return {
           player,
           overallScore: scoreData.totalPoints,
-          // breakdown: scoreData.breakdown,
         };
       })
       .filter(Boolean)
@@ -105,9 +102,9 @@ export const OverallLeaderboardPage: React.FC = () => {
   }, [allPlayers, allWorldRecords, loading, leaderboardWeights]);
 
   const getRankRowStyling = (rank: number): string => {
-    if (rank === 1) return "bg-tier1/20 border-l-4 border-tier1"; // Gold
-    if (rank === 2) return "bg-tier2/20 border-l-4 border-tier2"; // Silver
-    if (rank === 3) return "bg-tier3/20 border-l-4 border-tier3"; // Bronze
+    if (rank === 1) return "bg-tier1/20 border-l-4 border-tier1"; 
+    if (rank === 2) return "bg-tier2/20 border-l-4 border-tier2"; 
+    if (rank === 3) return "bg-tier3/20 border-l-4 border-tier3"; 
     return "hover:bg-gray-800/30";
   };
 
@@ -129,9 +126,9 @@ export const OverallLeaderboardPage: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-100 mb-2">Overall Player Rankings</h1>
           <p className="text-sm text-gray-400">
             Players are ranked based on points earned from their placements in verified world records.
-            Points are weighted by category (Speed: {leaderboardWeights.Speed}%, Economy: {leaderboardWeights.Economy}%, Cosmetics: {leaderboardWeights.Cosmetics}%).
+            Points are weighted by category (Speed: {leaderboardWeights[LeaderboardCategory.SPEED]}%, Cosmetics: {leaderboardWeights[LeaderboardCategory.COSMETICS]}%).
             Base points: 1st: 100, 2nd: 75, 3rd: 60, Top 5: 50, Top 10: 30, Top 25: 15, Top 50: 5.
-            World records not falling into these three main categories do not contribute to this weighted score.
+            World records not falling into these two main categories do not contribute to this weighted score.
           </p>
         </div>
       </Card>
@@ -148,7 +145,7 @@ export const OverallLeaderboardPage: React.FC = () => {
 
         {!loading && overallLeaderboardData.filter(d => d.overallScore > 0).length > 0 && (
           <div className="divide-y divide-dark-border">
-            {overallLeaderboardData.filter(d => d.overallScore > 0).slice(0, 100).map((data, index) => { // Display top 100 with scores > 0
+            {overallLeaderboardData.filter(d => d.overallScore > 0).slice(0, 100).map((data, index) => { 
               const rank = index + 1;
               return (
               <div key={data.player.id} className={`grid grid-cols-[50px_1fr_100px_150px] gap-x-4 p-3 items-center transition-colors duration-150 ${getRankRowStyling(rank)}`}>

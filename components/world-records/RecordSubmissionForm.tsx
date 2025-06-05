@@ -15,8 +15,6 @@ interface RecordSubmissionFormProps {
 export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onClose }) => {
   const { currentUser, submitRecord } = useAppContext();
   const [type, setType] = useState<WorldRecordType | ''>('');
-  // mapName is now part of the WorldRecordType for speed records, so we might not need a separate state
-  // However, for a user-friendly form, it's better to select map for speed records.
   const [mapName, setMapName] = useState(''); 
   const [value, setValue] = useState('');
   const [proofUrl, setProofUrl] = useState('');
@@ -26,14 +24,25 @@ export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onCl
 
   const isSpeedRecord = useMemo(() => type.startsWith(LeaderboardCategory.SPEED), [type]);
 
-  // Filter WORLD_RECORD_TYPE_OPTIONS to match selection logic for speed + map
   const recordTypeOptions = useMemo(() => {
-    return WORLD_RECORD_TYPE_OPTIONS.map(opt => {
-        // For user display, remove map from type if it exists, we'll handle map selection separately
-        const label = opt.label.includes(" - ") ? opt.label.substring(0, opt.label.lastIndexOf(" - ")) : opt.label;
-        return {...opt, label: label};
+    // Filter out Economy-related types first
+    const nonEconomyTypes = WORLD_RECORD_TYPE_OPTIONS.filter(opt => 
+        !opt.value.startsWith("Economy") && opt.value !== WorldRecordType.LONGEST_SURVIVAL_ANY // Temporarily remove Longest Survival if not handled
+    );
+
+    // Then, process labels for display (grouping by map for speed, etc.)
+    return nonEconomyTypes.map(opt => {
+        // For Speed, we want to group by mode (Normal/Glitched) and then select map separately
+        if (opt.value.startsWith(LeaderboardCategory.SPEED)) {
+            const parts = opt.label.split(" - ");
+            if (parts.length >= 2) { // Should be "Speed - Normal - Map" or "Speed - Glitched - Map"
+                return {...opt, label: `${parts[0]} - ${parts[1]}`}; // Display as "Speed - Normal" or "Speed - Glitched"
+            }
+        }
+        // For Cosmetics, display full type
+        return opt;
     }).filter((opt, index, self) => 
-        index === self.findIndex((t) => t.label === opt.label) // Unique labels
+        index === self.findIndex((t) => t.label === opt.label) // Deduplicate based on the new label
     );
   }, []);
 
@@ -52,17 +61,16 @@ export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onCl
       return;
     }
     
-    let finalRecordType = type as WorldRecordType; // Base type selected by user
+    let finalRecordType = type as WorldRecordType; 
     if (isSpeedRecord) {
         if (!mapName) {
             setError("Map Name is required for speed records.");
             return;
         }
-        // Construct the full WorldRecordType enum string
-        const typePrefix = type.substring(0, type.lastIndexOf(" - ") > 0 ? type.lastIndexOf(" - ") : type.length);
-        const fullTypeString = `${typePrefix} - ${mapName}`;
+        // Reconstruct the full WorldRecordType string for speed records
+        // Type selected in dropdown is "Speed - Normal" or "Speed - Glitched"
+        const fullTypeString = `${type} - ${mapName}`; 
         
-        // Validate if this constructed string is a valid WorldRecordType
         if (!Object.values(WorldRecordType).includes(fullTypeString as WorldRecordType)) {
             setError(`Invalid combination of speed record type and map: ${fullTypeString}. Please select a valid map for the chosen speed category.`);
             return;
@@ -98,7 +106,7 @@ export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onCl
 
       <Select 
         label="Record Category" 
-        options={recordTypeOptions} 
+        options={recordTypeOptions}
         value={type} 
         onChange={e => setType(e.target.value as WorldRecordType | '')} 
         required 
@@ -119,7 +127,8 @@ export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onCl
       <Select label="Region (Optional)" options={[{value: '', label: 'Select Region'}, ...REGION_OPTIONS]} value={region} onChange={e => setRegion(e.target.value as Region | '')} />
       
       <p className="text-xs text-gray-400">
-        Note: For time-based records (Speed, Longest Survival), enter value in total seconds.
+        Note: For time-based records (Speed), enter value in total seconds.
+        For other records (Cosmetics), enter the total count.
       </p>
 
       <div className="flex justify-end space-x-3 pt-2">

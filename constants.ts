@@ -1,6 +1,6 @@
 
 
-import { TierLevel, Badge, Player, Clan, WorldRecord, WorldRecordType, SiteSettings, Submission, SubmissionStatus, SubmissionData, ClanApplicationData, RecordVerificationData, StatUpdateProofData, BadgeCategory, UsernameColorTag, Message, Conversation, PlayerStats, LeaderboardCategory, SpeedSubCategory, EconomySubCategory, CosmeticsSubCategory, Region, CollectionRank, LeaderboardWeights } from './types';
+import { TierLevel, Badge, Player, Clan, WorldRecord, WorldRecordType, SiteSettings, Submission, SubmissionStatus, SubmissionData, ClanApplicationData, RecordVerificationData, StatUpdateProofData, BadgeCategory, UsernameColorTag, Message, Conversation, PlayerStats, LeaderboardCategory, SpeedSubCategory, CosmeticsSubCategory, Region, CollectionRank, LeaderboardWeights } from './types';
 
 export const TIER_STYLES: Record<TierLevel, { name: string; badgeClass: string; cardClass: string; iconClass: string, glowClass?: string }> = {
   [TierLevel.T1]: { name: "Tier 1 - Apex Sovereign", badgeClass: "bg-gradient-to-br from-tier1 via-amber-400 to-yellow-600 text-black font-bold border-2 border-yellow-700 shadow-md", cardClass: "border-tier1", iconClass: "fas fa-chess-king text-black", glowClass: "shadow-glow-tier1" },
@@ -24,35 +24,42 @@ export const MOCK_USERNAME_COLOR_TAGS: UsernameColorTag[] = [
 ];
 
 export const INITIAL_BADGES: Badge[] = [
-  { id: "beta_tester", name: "Beta Tester", description: "Played during early access", iconClass: "fas fa-star", colorClass: "text-yellow-400", unlockCriteria: "Participated in the game's early access phase.", value: 400, category: "Event" },
-  { id: "verified_yt", name: "Verified YouTuber", description: "10K+ subs, approved", iconClass: "fab fa-youtube", colorClass: "text-red-500", unlockCriteria: "Official content creator with 10K+ YouTube subscribers, approved by admin.", value: 1000, category: "Verification", colorTagId: "uct_yt_verified" },
-  { id: "verified_tiktok", name: "Verified TikToker", description: "50K+ followers, approved", iconClass: "fab fa-tiktok", colorClass: "text-pink-500", unlockCriteria: "Official content creator with 50K+ TikTok followers, approved by admin.", value: 1000, category: "Verification", colorTagId: "uct_tiktok_verified" },
-  { id: "game_admin", name: "Game Admin (Owner)", description: "Assigned by staff", iconClass: "fas fa-crown", colorClass: "text-red-600", unlockCriteria: "Official game administrator/owner, assigned by staff.", value: 4000, category: "Role", colorTagId: "uct_admin_glow" },
-  { id: "moderator", name: "Moderator", description: "Assigned by staff", iconClass: "fas fa-shield-alt", colorClass: "text-purple-500", unlockCriteria: "Community Moderator, assigned by staff.", value: 1500, category: "Role" },
-  { id: "clan_founder", name: "Clan Founder", description: "Owns a clan with 10+ members", iconClass: "fas fa-crown", colorClass: "text-purple-400", unlockCriteria: "Founded a clan that has reached 10 or more verified members.", value: 250, category: "Achievement" },
-  { id: "economy_mogul", name: "Economy Mogul", description: "Earned 1M total money", iconClass: "fas fa-sack-dollar", colorClass: "text-green-400", unlockCriteria: "Accumulate 1,000,000 in-game money.", value: 500, category: "Achievement" },
-  { id: "speed_demon", name: "Speed Demon", description: "Held a #1 Speed Record", iconClass: "fas fa-bolt", colorClass: "text-yellow-300", unlockCriteria: "Hold a #1 world record for speed in any official category.", value: 1200, category: "Achievement" },
-  { id: "event_winner_s1", name: "Season 1 Champion", description: "Winner of Season 1 tourney", iconClass: "fas fa-trophy", colorClass: "text-amber-500", unlockCriteria: "Achieved 1st place in the Season 1 official tournament.", value: 2000, category: "Event", usernameColorUnlock: { textClasses: ['text-amber-400', 'font-black'], description: "Bold Amber Username" } },
-  { id: "collector_adept", name: "Adept Collector", description: "Owns 10+ unusuals", iconClass: "fas fa-gem", colorClass: "text-indigo-400", unlockCriteria: "Own at least 10 different Unusual cosmetic items.", value: 300, category: "Achievement" },
+  { id: "beta_tester", name: "Beta Tester", description: "Played during early access", iconClass: "fas fa-star", colorClass: "text-yellow-400", unlockCriteria: "Participated in the game's early access phase.", value: 0, category: "Event", isVisible: true },
+  { id: "verified_yt", name: "Verified YouTuber", description: "10K+ subs, approved", iconClass: "fab fa-youtube", colorClass: "text-red-500", unlockCriteria: "Official content creator with 10K+ YouTube subscribers, approved by admin.", value: 1000, category: "Verification", colorTagId: "uct_yt_verified", isVisible: true },
+  { id: "verified_tiktok", name: "Verified TikToker", description: "50K+ followers, approved", iconClass: "fab fa-tiktok", colorClass: "text-pink-500", unlockCriteria: "Official content creator with 50K+ TikTok followers, approved by admin.", value: 1000, category: "Verification", colorTagId: "uct_tiktok_verified", isVisible: true },
+  { id: "game_admin", name: "Game Admin (Owner)", description: "Assigned by staff", iconClass: "fas fa-crown", colorClass: "text-red-600", unlockCriteria: "Official game administrator/owner, assigned by staff.", value: 0, category: "Role", colorTagId: "uct_admin_glow", isVisible: true },
+  { id: "moderator", name: "Moderator", description: "Assigned by staff", iconClass: "fas fa-shield-alt", colorClass: "text-purple-500", unlockCriteria: "Community Moderator, assigned by staff.", value: 0, category: "Role", isVisible: true },
+  { id: "clan_founder", name: "Clan Founder", description: "Owns a clan with 10+ members", iconClass: "fas fa-crown", colorClass: "text-purple-400", unlockCriteria: "Founded a clan that has reached 10 or more verified members.", value: 250, category: "Achievement", isVisible: true },
+  { id: "speed_demon", name: "Speed Demon", description: "Held a #1 Speed Record", iconClass: "fas fa-bolt", colorClass: "text-yellow-300", unlockCriteria: "Hold a #1 world record for speed in any official category.", value: 1200, category: "Achievement", isVisible: true },
+  { id: "event_winner_s1", name: "Season 1 Champion", description: "Winner of Season 1 tourney", iconClass: "fas fa-trophy", colorClass: "text-amber-500", unlockCriteria: "Achieved 1st place in the Season 1 official tournament.", value: 2000, category: "Event", usernameColorUnlock: { textClasses: ['text-amber-400', 'font-black'], description: "Bold Amber Username" }, isVisible: true },
+  { id: "collector_adept", name: "Adept Collector", description: "Owns 10+ unusuals", iconClass: "fas fa-gem", colorClass: "text-indigo-400", unlockCriteria: "Own at least 10 different Unusual cosmetic items.", value: 300, category: "Achievement", isVisible: true },
+  { id: "test_badge_hidden", name: "Hidden Test Badge", description: "A badge for testing, not publicly visible.", iconClass: "fas fa-flask", colorClass: "text-gray-500", unlockCriteria: "Assigned by admin for testing purposes.", value: 0, category: "General", isVisible: false },
+  { id: "staff_badge", name: "Staff Team", description: "Core member of the Evade Competitive staff.", iconClass: "fas fa-shield-virus", colorClass: "text-teal-400", unlockCriteria: "Assigned to official staff members.", value: 0, category: "Role", isVisible: true },
+  { id: "contributor_badge", name: "Contributor", description: "Made significant contributions to the platform or community.", iconClass: "fas fa-hands-helping", colorClass: "text-green-400", unlockCriteria: "Recognized for valuable contributions.", value: 100, category: "General", isVisible: true },
+  { id: "bug_hunter_badge", name: "Bug Hunter", description: "Reported a critical game/platform bug.", iconClass: "fas fa-bug", colorClass: "text-orange-400", unlockCriteria: "Successfully reported a verified critical bug.", value: 150, category: "Achievement", isVisible: true },
 ];
 
 export const COLLECTION_RANKS: CollectionRank[] = [
-  { id: "cr_bronze", name: "Bronze", pointsRequired: 0, description: "Everyone starts here.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761738936881222/bronze.png?ex=68416ac1&is=68401941&hm=a85fe6be0207cdd11aeadb5c5fde4c89572261515d30f1613ae1ba9f6cc98ec9&=&format=webp&quality=lossless" },
-  { id: "cr_silver", name: "Silver", pointsRequired: 2000, description: "Got a few common badges.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761740509872128/silver.png?ex=68416ac1&is=68401941&hm=6cf44ecb9d5bc343a4be9025f9b8300113ac6b831b947c3fc17d01d209820be5&=&format=webp&quality=lossless" },
-  { id: "cr_gold", name: "Gold", pointsRequired: 5000, description: "Dedicated collector.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739624616006/gold.png?ex=68416ac1&is=68401941&hm=cfa8dabe5d238c195b2f7c05bac15e704f312784e7477b4a19e7b47d50b8f6b0&=&format=webp&quality=lossless" },
-  { id: "cr_platinum", name: "Platinum", pointsRequired: 10000, description: "Has many epic/rare badges.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739972874340/platinum.png?ex=68416ac1&is=68401941&hm=898821b97bd4a5d80ed45309b18455062336c8ca3e9d3a99bfb8d6cc6411cd89&=&format=webp&quality=lossless" },
-  { id: "cr_diamond", name: "Diamond", pointsRequired: 15000, description: "Elite badge hunter.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739297722389/diamond.png?ex=68416ac1&is=68401941&hm=e40c7db2083c80b785f525c4858f3b4c70195a3b9fc8855192eda14f7a8c40d4&=&format=webp&quality=lossless" },
-  { id: "cr_radiant_nexus", name: "Radiant Nexus", pointsRequired: 20000, description: "Badge god. Limited flex status.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761740228722718/Radiant_Nexus_.png?ex=68416ac1&is=68401941&hm=111cebfeef14bb59e413bc0148d64f193e69afd0c1a36a103537766de482689c&=&format=webp&quality=lossless" },
+  { id: "cr_bronze", name: "Bronze", pointsRequired: 0, description: "Everyone starts here.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761738936881222/bronze.png?ex=6842bc41&is=68416ac1&hm=40986f5c06b3c1921b02c7dc24c3b89c9065bb7f1a88fe0b114d5ce432876a7e&=&format=webp&quality=lossless" },
+  { id: "cr_silver", name: "Silver", pointsRequired: 2000, description: "Got a few common badges.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761740509872128/silver.png?ex=6842bc41&is=68416ac1&hm=60e12f0f9f86f23afbffe6eb25a00b6091d173cfc2454c34cd44f2d6c0e6f326&=&format=webp&quality=lossless" },
+  { id: "cr_gold", name: "Gold", pointsRequired: 5000, description: "Dedicated collector.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739624616006/gold.png?ex=6842bc41&is=68416ac1&hm=c1ac4da071fd51795b193c9a3cf760dc22bfb08c14a531ff5da9f65399ab48c2&=&format=webp&quality=lossless" },
+  { id: "cr_platinum", name: "Platinum", pointsRequired: 10000, description: "Has many epic/rare badges.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739972874340/platinum.png?ex=6842bc41&is=68416ac1&hm=069bfd57eb71f0d1d3df0c290cc3d4bb94311a3e0e83727a757d46fecef94257&=&format=webp&quality=lossless" },
+  { id: "cr_diamond", name: "Diamond", pointsRequired: 15000, description: "Elite badge hunter.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761739297722389/diamond.png?ex=6842bc41&is=68416ac1&hm=cf78c5cf6675f5ce2fa4a199e404c8f9ac84e26e2b1a40e7e11cc4e532f021b1&=&format=webp&quality=lossless" },
+  { id: "cr_radiant_nexus", name: "Radiant Nexus", pointsRequired: 20000, description: "Badge god. Limited flex status.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761740228722718/Radiant_Nexus_.png?ex=6842bc41&is=68416ac1&hm=311a1152c8eb9efc60a6741d1bf6332cc98a43f563cf7f2077101718ed2d6c56&=&format=webp&quality=lossless" },
 ];
 
 export const MOCK_PLAYERS: Player[] = [
   {
     id: "admin_user_noah", username: "Noah", email: "tuvsheenee916@gmail.com", robloxId: "1356770784",
     tier: TierLevel.T1, 
-    stats: { speedNormal: 90, speedGlitched: 70, economyMoney: 1000000, economyPoints: 50000, cosmeticsUnusuals: 20, cosmeticsAccessories: 50, timeAlive: 36000 },
-    badges: ["game_admin", "beta_tester", "event_winner_s1", "speed_demon", "economy_mogul", "collector_adept"], lastActive: new Date(), password: "FM)dj19uqfn8!U^+",
+    stats: { speedNormal: 90, speedGlitched: 70, cosmeticsUnusuals: 20, cosmeticsAccessories: 50, timeAlive: 36000 },
+    badges: ["game_admin", "beta_tester", "event_winner_s1", "speed_demon", "collector_adept", "test_badge_hidden", "staff_badge"],
+    lastActive: new Date(), password: "FM)dj19uqfn8!U^+",
     pronouns: "He/Him", location: "USA", bio: "Keeping Evade fair and fun! I'm the lead admin for Evade Competitive.", joinedDate: new Date("2023-01-01"),
-    customAvatarUrl: null, socialLinks: { youtube: "https://youtube.com/@Evade", twitter: "https://x.com/EvadeGame" },
+    customAvatarUrl: null, 
+    customProfileBannerUrl: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWY3NWEzN2YxMzA1YTI2OTZkZDE1NTA5NzkxMGNmZjY1MDU1NDRjZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pVic3wqQx7wkxXMhv7/giphy.gif", // Example banner for admin
+    canSetCustomBanner: true, // Admin can set banner
+    socialLinks: { youtube: "https://youtube.com/@Evade", twitter: "https://x.com/EvadeGame" },
     isVerifiedPlayer: true, selectedUsernameTagId: "uct_admin_glow"
   },
 ];
@@ -61,8 +68,6 @@ export const MOCK_CLANS: Clan[] = [];
 
 export const MOCK_WORLD_RECORDS: WorldRecord[] = [
   { id: "wr_admin_speed_facility_normal", playerId: "admin_user_noah", type: WorldRecordType.SPEED_NORMAL_FACILITY, value: 90, proofUrl: "https://example.com/proof", timestamp: new Date("2024-01-01"), isVerified: true },
-  // { id: "wr_admin_speed_compound_normal", playerId: "admin_user_noah", type: WorldRecordType.SPEED_NORMAL_COMPOUND, value: 105, proofUrl: "https://example.com/proof2", timestamp: new Date("2024-01-02"), isVerified: true },
-  { id: "wr_admin_eco_money", playerId: "admin_user_noah", type: WorldRecordType.ECONOMY_MONEY_MATCH, value: 50000, proofUrl: "https://example.com/proof3", timestamp: new Date("2024-01-03"), isVerified: true },
 ];
 
 export const DEFAULT_SITE_SETTINGS: SiteSettings = {
@@ -121,7 +126,7 @@ Welcome to the Evade Competitive Platform! To ensure a fair, respectful, and enj
 **Q: How do I join a clan?**
 A: Contact clan leaders or apply through their profile if they are recruiting.
 **Q: How are tiers calculated?**
-A: Tiers are primarily based on your performance in the primary leaderboard categories (Speed, Economy).
+A: Tiers are primarily based on your performance in the primary leaderboard categories (Speed, Cosmetics).
 **Q: How do I submit a record?**
 A: Go to the 'Submit' page and fill out the record submission form with valid proof.`,
   submissionGuidelinesContent: `## Evade Competitive - Submission Guidelines
@@ -137,7 +142,7 @@ To ensure your stat updates, world records, and other proofs are processed effic
 
 ### II. Video Proof - Mandatory Standards
 
-Video proof is **required** for all World Record attempts and significant Stat Updates (especially for Speed and high-value Economy/Cosmetic achievements).
+Video proof is **required** for all World Record attempts and significant Stat Updates (especially for Speed and high-value Cosmetic achievements).
 
 1.  **Clarity & Quality:**
     *   Video must be of sufficient quality to clearly see all necessary information (e.g., gameplay, UI elements, scores, timers).
@@ -151,7 +156,7 @@ Video proof is **required** for all World Record attempts and significant Stat U
 
 3.  **Essential Information Visible:**
     *   **Your In-Game Username:** Your username must be clearly visible during the gameplay and on any final result screens.
-    *   **Game Interface/HUD:** Timers, scores, currency, item counts, and other relevant UI elements must be clearly visible.
+    *   **Game Interface/HUD:** Timers, scores, item counts, and other relevant UI elements must be clearly visible.
     *   **Final Result Screen:** If applicable (e.g., end-of-match scoreboard, inventory screen), this must be clearly shown.
 
 4.  **Platform & Timestamps:**
@@ -194,7 +199,6 @@ export const MOCK_CONVERSATIONS: Conversation[] = [];
 
 export const LEADERBOARD_CATEGORIES: { value: LeaderboardCategory; label: string; icon: string }[] = [
     { value: LeaderboardCategory.SPEED, label: "Speed", icon: "fas fa-stopwatch" },
-    { value: LeaderboardCategory.ECONOMY, label: "Economy", icon: "fas fa-coins" },
     { value: LeaderboardCategory.COSMETICS, label: "Cosmetics", icon: "fas fa-paint-brush" },
 ];
 
@@ -202,10 +206,7 @@ export const SPEED_SUB_CATEGORIES_OPTIONS: { value: SpeedSubCategory; label: str
     { value: SpeedSubCategory.NORMAL, label: "Normal" },
     { value: SpeedSubCategory.GLITCHED, label: "Glitched" },
 ];
-export const ECONOMY_SUB_CATEGORIES_OPTIONS: { value: EconomySubCategory; label: string }[] = [
-    { value: EconomySubCategory.MONEY, label: "Money" },
-    { value: EconomySubCategory.POINTS, label: "Points" },
-];
+
 export const COSMETICS_SUB_CATEGORIES_OPTIONS: { value: CosmeticsSubCategory; label: string }[] = [
     { value: CosmeticsSubCategory.UNUSUALS, label: "Unusuals" },
     { value: CosmeticsSubCategory.ACCESSORIES, label: "Accessories" },
@@ -229,7 +230,7 @@ export const NAV_ITEMS = [
 ];
 
 export const BADGE_CATEGORIES_TABS: { label: string; category?: BadgeCategory }[] = [
-    { label: "All Badges" }, { label: "Achievements", category: "Achievement" }, { label: "Roles", category: "Role" }, { label: "Verification", category: "Verification" }, { label: "Events", category: "Event" },
+    { label: "All Badges" }, { label: "Achievements", category: "Achievement" }, { label: "Roles", category: "Role" }, { label: "Verification", category: "Verification" }, { label: "Events", category: "Event" }, { label: "General", category: "General" }
 ];
 
 export const CLAN_STATUS_OPTIONS = [ { value: "", label: "All Status" }, { value: "Active", label: "Active" }, { value: "Inactive", label: "Inactive" }, { value: "Recruiting", label: "Recruiting" }, ];
@@ -257,7 +258,6 @@ export const STAT_UPDATE_CATEGORY_OPTIONS: { value: LeaderboardCategory; label: 
 
 export const STAT_UPDATE_SUBCATEGORY_OPTIONS: Record<LeaderboardCategory, { value: string; label: string }[]> = {
     [LeaderboardCategory.SPEED]: SPEED_SUB_CATEGORIES_OPTIONS,
-    [LeaderboardCategory.ECONOMY]: ECONOMY_SUB_CATEGORIES_OPTIONS,
     [LeaderboardCategory.COSMETICS]: COSMETICS_SUB_CATEGORIES_OPTIONS,
 };
 
@@ -269,6 +269,8 @@ const newMapData: { name: string, imageUrl: string }[] = [
     { name: "Drab", imageUrl: "https://i.pinimg.com/736x/d2/06/09/d2060902e16f0f89404ce9bc2410fe86.jpg" },
     { name: "Desert Bus", imageUrl: "https://i.pinimg.com/736x/8c/13/64/8c13647498bccd35dc4e756b32e85280.jpg" },
     { name: "Facility", imageUrl: "https://example.com/facility.png" },
+    { name: "Compound", imageUrl: "https://example.com/compound.png" },
+    { name: "Site Omega", imageUrl: "https://example.com/siteomega.png" },
 ];
 
 export const MAP_NAME_OPTIONS: { value: string; label: string; imageUrl?: string }[] = newMapData.map(map => ({
@@ -283,14 +285,10 @@ export const MAP_FILTER_OPTIONS: { value: string; label: string; imageUrl?: stri
 ];
 
 
-export const STAT_METRIC_UNITS: Record<LeaderboardCategory, Partial<Record<SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory, string>>> = {
+export const STAT_METRIC_UNITS: Record<LeaderboardCategory, Partial<Record<SpeedSubCategory | CosmeticsSubCategory, string>>> = {
     [LeaderboardCategory.SPEED]: {
         [SpeedSubCategory.NORMAL]: "seconds",
         [SpeedSubCategory.GLITCHED]: "seconds",
-    },
-    [LeaderboardCategory.ECONOMY]: {
-        [EconomySubCategory.MONEY]: "$",
-        [EconomySubCategory.POINTS]: "points",
     },
     [LeaderboardCategory.COSMETICS]: {
         [CosmeticsSubCategory.UNUSUALS]: "items",
@@ -299,15 +297,12 @@ export const STAT_METRIC_UNITS: Record<LeaderboardCategory, Partial<Record<Speed
 };
 
 export const INITIAL_LEADERBOARD_WEIGHTS: LeaderboardWeights = {
-  [LeaderboardCategory.SPEED]: 50,
-  [LeaderboardCategory.ECONOMY]: 30,
-  [LeaderboardCategory.COSMETICS]: 20,
+  [LeaderboardCategory.SPEED]: 60,
+  [LeaderboardCategory.COSMETICS]: 40,
 };
 
 export const getCategoryFromWorldRecordType = (recordType: WorldRecordType): LeaderboardCategory | null => {
   if (recordType.startsWith(LeaderboardCategory.SPEED)) return LeaderboardCategory.SPEED;
-  if (recordType.startsWith(LeaderboardCategory.ECONOMY)) return LeaderboardCategory.ECONOMY;
   if (recordType.startsWith(LeaderboardCategory.COSMETICS)) return LeaderboardCategory.COSMETICS;
-  // LONGEST_SURVIVAL_ANY currently does not map to a weighted category.
   return null; 
 };

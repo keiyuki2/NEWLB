@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
-import { Input } from '../ui/Input'; // Assuming Input is in ui
+import { Input } from '../ui/Input'; 
+import { Button } from '../ui/Button';
 
 export const CommandBar: React.FC = () => {
   const { executeAdminCommand } = useAppContext();
@@ -9,21 +10,21 @@ export const CommandBar: React.FC = () => {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!command.trim()) return;
 
-    setHistory(prev => [command, ...prev].slice(0, 20)); // Keep last 20 commands
-    setHistoryIndex(-1); // Reset history navigation
+    setHistory(prev => [command, ...prev].slice(0, 20)); 
+    setHistoryIndex(-1); 
 
     const result = await executeAdminCommand(command);
     setFeedback({ type: result.success ? 'success' : 'error', message: result.message });
     if (result.success) {
       setCommand('');
     }
-    // Auto-clear feedback after a few seconds
-    setTimeout(() => setFeedback(null), 15000); // Increased duration
+    setTimeout(() => setFeedback(null), 15000); 
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -41,14 +42,42 @@ export const CommandBar: React.FC = () => {
         setHistoryIndex(newIndex);
         setCommand(newIndex === -1 ? '' : history[newIndex] || '');
       } else {
-        setCommand(''); // Clear if at the end of history (or no history)
+        setCommand(''); 
       }
     }
   };
 
+  if (isMinimized) {
+    return (
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 mb-3 z-50">
+            <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setIsMinimized(false)}
+            title="Expand Admin Command Bar"
+            className="rounded-full !p-2.5 shadow-lg"
+            >
+                <i className="fas fa-terminal text-lg"></i>
+            </Button>
+        </div>
+    );
+  }
+
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-dark-surface border-t border-dark-border p-3 shadow-lg z-50">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs text-gray-500 font-mono">Admin Command Line</span>
+        <Button
+            variant="ghost"
+            size="xs"
+            onClick={() => setIsMinimized(true)}
+            className="!p-1 text-gray-500 hover:text-gray-200"
+            title="Minimize Command Bar"
+        >
+            <i className="fas fa-compress-arrows-alt"></i>
+        </Button>
+      </div>
       <form onSubmit={handleSubmit} className="flex items-center space-x-3">
         <span className="text-gray-400 font-mono text-sm hidden sm:inline">{'>'}</span>
         <Input
@@ -66,7 +95,7 @@ export const CommandBar: React.FC = () => {
         </button>
       </form>
       {feedback && (
-        <p className={`mt-1.5 text-xs ${feedback.type === 'success' ? 'text-green-400' : 'text-red-400'} whitespace-pre-line`}>
+        <p className={`mt-1.5 text-xs ${feedback.type === 'success' ? 'text-green-400' : 'text-red-400'} whitespace-pre-wrap max-h-32 overflow-y-auto`}>
           {feedback.message}
         </p>
       )}

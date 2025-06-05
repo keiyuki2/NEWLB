@@ -16,14 +16,15 @@ export const ViewAllBadgesModal: React.FC<ViewAllBadgesModalProps> = ({ isOpen, 
 
   const userOwnedBadges = badgeIds
     .map(id => allBadgesConfig.find(b => b.id === id))
-    .filter(Boolean) as BadgeType[];
+    .filter(Boolean)
+    .filter(badge => (badge as BadgeType).isVisible) as BadgeType[];
 
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`${username}'s Badges (${userOwnedBadges.length})`} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={`${username}'s Public Badges (${userOwnedBadges.length})`} size="md">
       {userOwnedBadges.length === 0 ? (
-        <p className="text-gray-400 text-center py-4">This user has no badges.</p>
+        <p className="text-gray-400 text-center py-4">This user has no publicly visible badges.</p>
       ) : (
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 py-1">
           {userOwnedBadges.map(badge => (
@@ -34,7 +35,10 @@ export const ViewAllBadgesModal: React.FC<ViewAllBadgesModalProps> = ({ isOpen, 
               <div>
                 <h4 className="font-semibold text-gray-100">{badge.name}</h4>
                 <p className="text-sm text-gray-300 leading-tight">{badge.description}</p>
-                <p className="text-xs text-gray-500 mt-1">Category: {badge.category} - Value: {badge.value} pts</p>
+                {(badge.value !== undefined && badge.value > 0) && (
+                    <p className="text-xs text-brand-accent mt-1">Value: {badge.value} pts</p>
+                )}
+                <p className="text-xs text-gray-500 mt-0.5">Category: {badge.category}</p>
                 <p className="text-xs text-gray-400 mt-0.5">Criteria: {badge.unlockCriteria || "General recognition."}</p>
               </div>
             </div>

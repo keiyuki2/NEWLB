@@ -54,20 +54,21 @@ export const ManageBadgesSection: React.FC = () => {
           <table className="min-w-full divide-y divide-dark-border">
             <thead className="bg-gray-700/50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Icon</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Category</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Value</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Color Tag</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Icon</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">ID</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Name</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Value</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Visible</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Color Tag</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-dark-border">
               {filteredBadges.map(badge => {
                 const linkedTag = badge.colorTagId ? usernameColorTags.find(t => t.id === badge.colorTagId) : null;
                 return (
-                    <tr key={badge.id} className="hover:bg-gray-700/30 transition-colors">
+                    <tr key={badge.id} className={`hover:bg-gray-700/30 transition-colors ${!badge.isVisible ? 'opacity-60 bg-gray-800/50' : ''}`}>
                     <td className="px-4 py-3 whitespace-nowrap text-lg">
                         <i className={`${badge.iconClass} ${badge.colorClass}`}></i>
                     </td>
@@ -80,7 +81,13 @@ export const ManageBadgesSection: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-100">{badge.name}</td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{badge.category}</td>
-                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{badge.value}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{badge.value ?? 0}</td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                        {badge.isVisible ? 
+                            <span className="text-green-400"><i className="fas fa-check-circle mr-1"></i>Yes</span> : 
+                            <span className="text-red-400"><i className="fas fa-times-circle mr-1"></i>No</span>
+                        }
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
                         {linkedTag ? (
                             <span className="text-xs bg-purple-600/50 text-purple-300 px-1.5 py-0.5 rounded">
@@ -101,7 +108,7 @@ export const ManageBadgesSection: React.FC = () => {
             })}
               {filteredBadges.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-6 text-gray-400">No badges found matching your search.</td>
+                  <td colSpan={8} className="text-center py-6 text-gray-400">No badges found matching your search.</td>
                 </tr>
               )}
             </tbody>

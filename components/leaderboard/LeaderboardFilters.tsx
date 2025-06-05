@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { LeaderboardCategory, SpeedSubCategory, EconomySubCategory, CosmeticsSubCategory } from '../../types'; 
-import { LEADERBOARD_CATEGORIES, SPEED_SUB_CATEGORIES_OPTIONS, ECONOMY_SUB_CATEGORIES_OPTIONS, COSMETICS_SUB_CATEGORIES_OPTIONS, MAP_FILTER_OPTIONS } from '../../constants'; 
+import { LeaderboardCategory, SpeedSubCategory, CosmeticsSubCategory } from '../../types';
+import { LEADERBOARD_CATEGORIES, SPEED_SUB_CATEGORIES_OPTIONS, COSMETICS_SUB_CATEGORIES_OPTIONS, MAP_FILTER_OPTIONS } from '../../constants';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -10,9 +10,9 @@ import { Select } from '../ui/Select';
 
 export interface LeaderboardFiltersState {
   category: LeaderboardCategory;
-  subCategory: SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory | null;
+  subCategory: SpeedSubCategory | CosmeticsSubCategory | null; 
   searchQuery: string;
-  selectedMap?: string; // New: For filtering speed runs by map
+  selectedMap?: string; 
 }
 
 interface LeaderboardFiltersProps {
@@ -31,27 +31,26 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
 
   const handleCategoryChange = (category: LeaderboardCategory) => {
     onFilterChange('category', category);
-    // Reset subCategory and selectedMap when primary category changes
-    onFilterChange('subCategory', null); 
-    onFilterChange('selectedMap', ''); 
-    // Automatically select first sub-category if available
     if (category === LeaderboardCategory.SPEED) {
         onFilterChange('subCategory', SPEED_SUB_CATEGORIES_OPTIONS[0].value);
-    } else if (category === LeaderboardCategory.ECONOMY) {
-        onFilterChange('subCategory', ECONOMY_SUB_CATEGORIES_OPTIONS[0].value);
+        // Keep existing map filter or default to all maps if not already set for speed
+        onFilterChange('selectedMap', filters.selectedMap && filters.category === LeaderboardCategory.SPEED ? filters.selectedMap : MAP_FILTER_OPTIONS[0].value);
     } else if (category === LeaderboardCategory.COSMETICS) {
         onFilterChange('subCategory', COSMETICS_SUB_CATEGORIES_OPTIONS[0].value);
+        onFilterChange('selectedMap', ''); // Clear map for non-speed
+    } else { 
+        onFilterChange('subCategory', null);
+        onFilterChange('selectedMap', ''); // Clear map for non-speed
     }
   };
 
-  const handleSubCategoryChange = (subCategory: SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory) => {
+  const handleSubCategoryChange = (subCategory: SpeedSubCategory | CosmeticsSubCategory) => {
     onFilterChange('subCategory', subCategory);
   };
   
   const getSubCategoryOptions = () => {
     switch (filters.category) {
       case LeaderboardCategory.SPEED: return SPEED_SUB_CATEGORIES_OPTIONS;
-      case LeaderboardCategory.ECONOMY: return ECONOMY_SUB_CATEGORIES_OPTIONS;
       case LeaderboardCategory.COSMETICS: return COSMETICS_SUB_CATEGORIES_OPTIONS;
       default: return [];
     }
@@ -63,7 +62,6 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
   return (
     <Card className="!bg-transparent border-none shadow-none p-0 mb-4">
         <div className="flex flex-col space-y-4">
-            {/* Primary Category Selection */}
             <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1">Category</label>
                 <div className="flex flex-wrap gap-2">
@@ -82,7 +80,6 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
                 </div>
             </div>
 
-            {/* Sub Category Selection (conditional) */}
             {subCategoryOptions.length > 0 && (
                  <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1">{filters.category} Sub-Category</label>
@@ -91,9 +88,9 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
                         <Button
                             key={subCat.value}
                             variant="filter"
-                            size="sm" // Smaller for sub-categories
+                            size="sm" 
                             isActive={filters.subCategory === subCat.value}
-                            onClick={() => handleSubCategoryChange(subCat.value as SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory)}
+                            onClick={() => handleSubCategoryChange(subCat.value as SpeedSubCategory | CosmeticsSubCategory)}
                         >
                             {subCat.label}
                         </Button>
@@ -102,7 +99,6 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
                 </div>
             )}
 
-            {/* Speed Mode Info Box and Map Picker */}
             {filters.category === LeaderboardCategory.SPEED && (
                 <div className="mt-3 pt-3 border-t border-dark-border/50 space-y-3">
                     <Alert type="info" title="Speed Mode Definitions">
@@ -134,13 +130,11 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
                                 />
                             )}
                         </div>
-                         {/* Removed the note about pending data structure updates from here, as it's now an Alert on LeaderboardPage.tsx */}
                     </div>
                 </div>
             )}
             
             <div className="flex flex-col md:flex-row md:items-end md:space-x-3 pt-2 space-y-3 md:space-y-0">
-                {/* Search Input */}
                 <div className="flex-grow">
                     <label htmlFor="leaderboard-search" className="block text-xs font-medium text-gray-400 mb-1">Search Players</label>
                     <Input
@@ -154,7 +148,6 @@ export const LeaderboardFilters: React.FC<LeaderboardFiltersProps> = ({
                     />
                 </div>
                 
-                {/* Action Buttons */}
                 <div className="flex items-end space-x-2">
                     <Button onClick={onRefresh} variant="outline" size="md" leftIcon={<i className="fas fa-sync-alt"></i>}>
                         Refresh

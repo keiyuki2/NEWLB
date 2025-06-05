@@ -8,7 +8,7 @@ import { Modal } from '../ui/Modal';
 import { Select } from '../ui/Select';
 import { TIER_OPTIONS } from '../../constants';
 import { UserBadgesList } from '../badges/UserBadgesList';
-import { Alert } from '../ui/Alert'; // For error messages
+import { Alert } from '../ui/Alert'; 
 
 const CreateUserModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const { createPlayer } = useAppContext();
@@ -59,7 +59,6 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
     updatePlayer, 
     badges: allBadges, 
     resetPlayerStats: contextResetPlayerStats,
-    setPlayerBlacklistedStatus,
     currentUser 
   } = useAppContext();
 
@@ -74,14 +73,23 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
   const [bio, setBio] = useState(liveUser.bio || '');
   const [isVerified, setIsVerified] = useState(liveUser.isVerifiedPlayer || false);
   const [isBlacklisted, setIsBlacklisted] = useState(liveUser.isBlacklisted || false); 
+  const [canSetCustomBanner, setCanSetCustomBanner] = useState(liveUser.canSetCustomBanner || false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Editable stats
+  const [speedNormal, setSpeedNormal] = useState(liveUser.stats.speedNormal.toString());
+  const [speedGlitched, setSpeedGlitched] = useState(liveUser.stats.speedGlitched.toString());
+  const [cosmeticsUnusuals, setCosmeticsUnusuals] = useState(liveUser.stats.cosmeticsUnusuals.toString());
+  const [cosmeticsAccessories, setCosmeticsAccessories] = useState(liveUser.stats.cosmeticsAccessories.toString());
+  const [timeAlive, setTimeAlive] = useState(liveUser.stats.timeAlive.toString());
 
 
   const [twitch, setTwitch] = useState(liveUser.socialLinks?.twitch || '');
   const [youtube, setYoutube] = useState(liveUser.socialLinks?.youtube || '');
 
-  const canEditUsername = currentUser?.id === liveUser.id;
+  const canEditUsername = currentUser?.id === liveUser.id || currentUser?.badges.includes('game_admin');
+
 
   useEffect(() => {
     setUsername(liveUser.username);
@@ -93,8 +101,14 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
     setBio(liveUser.bio || '');
     setIsVerified(liveUser.isVerifiedPlayer || false);
     setIsBlacklisted(liveUser.isBlacklisted || false); 
+    setCanSetCustomBanner(liveUser.canSetCustomBanner || false);
     setTwitch(liveUser.socialLinks?.twitch || '');
     setYoutube(liveUser.socialLinks?.youtube || '');
+    setSpeedNormal(liveUser.stats.speedNormal.toString());
+    setSpeedGlitched(liveUser.stats.speedGlitched.toString());
+    setCosmeticsUnusuals(liveUser.stats.cosmeticsUnusuals.toString());
+    setCosmeticsAccessories(liveUser.stats.cosmeticsAccessories.toString());
+    setTimeAlive(liveUser.stats.timeAlive.toString());
     setModalError(null);
   }, [liveUser]);
 
@@ -110,9 +124,30 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
         youtube: youtube || undefined,
     };
 
+    const parsedSpeedNormal = parseInt(speedNormal, 10);
+    const parsedSpeedGlitched = parseInt(speedGlitched, 10);
+    const parsedCosmeticsUnusuals = parseInt(cosmeticsUnusuals, 10);
+    const parsedCosmeticsAccessories = parseInt(cosmeticsAccessories, 10);
+    const parsedTimeAlive = parseInt(timeAlive, 10);
+
+    if (isNaN(parsedSpeedNormal) || isNaN(parsedSpeedGlitched) || isNaN(parsedCosmeticsUnusuals) || isNaN(parsedCosmeticsAccessories) || isNaN(parsedTimeAlive)) {
+        setModalError("All stat values must be valid numbers.");
+        setIsLoading(false);
+        return;
+    }
+    
+    const updatedStats: PlayerStats = {
+        speedNormal: parsedSpeedNormal,
+        speedGlitched: parsedSpeedGlitched,
+        cosmeticsUnusuals: parsedCosmeticsUnusuals,
+        cosmeticsAccessories: parsedCosmeticsAccessories,
+        timeAlive: parsedTimeAlive,
+    };
+
+
     const updatedUserPayload: Player = {
         ...liveUser, 
-        username: canEditUsername ? username : liveUser.username, // Only send updated username if allowed
+        username: canEditUsername ? username : liveUser.username,
         robloxId,
         tier: selectedTier,
         email: email || undefined,
@@ -122,6 +157,8 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
         socialLinks: updatedSocialLinks,
         isVerifiedPlayer: isVerified,
         isBlacklisted: isBlacklisted, 
+        canSetCustomBanner: canSetCustomBanner,
+        stats: updatedStats,
     };
     
     const result = await updatePlayer(updatedUserPayload);
@@ -154,14 +191,21 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
   const handleToggleBlacklist = () => {
     setIsBlacklisted(prev => !prev);
   };
+  
+  const handleToggleCanSetBanner = () => {
+    setCanSetCustomBanner(prev => !prev);
+  };
 
 
   const handleResetStats = () => {
     if (!liveUser) return;
-    const confirmReset = window.confirm(`Are you sure you want to reset stats for ${liveUser.username}? This will reset Speed, Economy, and Cosmetic stats. Time Alive will be preserved.`);
+    const confirmReset = window.confirm(`Are you sure you want to reset stats for ${liveUser.username}? This will reset Speed and Cosmetic stats to 0. Time Alive will be preserved.`);
     if (confirmReset) {
         contextResetPlayerStats(liveUser.id);
-        onClose(); 
+        setSpeedNormal("0");
+        setSpeedGlitched("0");
+        setCosmeticsUnusuals("0");
+        setCosmeticsAccessories("0");
     }
   };
 
@@ -177,7 +221,7 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
         value={username} 
         onChange={(e) => setUsername(e.target.value)} 
         disabled={!canEditUsername || isLoading}
-        title={!canEditUsername ? "Username cannot be changed for other users." : ""}
+        title={!canEditUsername ? "Username cannot be changed for other users by non-admins." : ""}
       />
       <Input label="Email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={isLoading} />
       <Input label="Roblox ID" value={robloxId} onChange={(e) => setRobloxId(e.target.value)} disabled={isLoading} />
@@ -208,6 +252,19 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
           />
           <span className={`text-xs ${isBlacklisted ? 'text-red-400 font-bold' : 'text-gray-400'}`}>{isBlacklisted ? 'BLACKLISTED' : 'NOT BLACKLISTED'}</span>
       </div>
+      
+      <div className="flex items-center space-x-3 mt-2">
+          <label htmlFor="canSetCustomBannerModal" className="text-sm text-gray-300">Allow Custom Banner:</label>
+          <input
+            type="checkbox"
+            id="canSetCustomBannerModal"
+            checked={canSetCustomBanner}
+            onChange={handleToggleCanSetBanner}
+            className="h-4 w-4 text-brand-primary bg-dark-bg border-dark-border rounded focus:ring-brand-primary"
+            disabled={isLoading}
+          />
+          <span className={`text-xs ${canSetCustomBanner ? 'text-green-400' : 'text-gray-400'}`}>{canSetCustomBanner ? 'ALLOWED' : 'NOT ALLOWED'}</span>
+      </div>
 
 
       <Input label="Pronouns" value={pronouns} onChange={(e) => setPronouns(e.target.value)} disabled={isLoading} />
@@ -215,9 +272,20 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
       <TextArea label="Bio" value={bio} onChange={(e) => setBio(e.target.value)} rows={3} disabled={isLoading} />
 
       <fieldset className="border border-dark-border p-2 rounded-md mt-2">
-          <legend className="text-xs font-medium text-gray-400 px-1">Social Links (Basic)</legend>
+          <legend className="text-xs font-medium text-gray-400 px-1">Social Links</legend>
           <Input label="Twitch Username" value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder="channel_name" wrapperClassName="mt-1" disabled={isLoading}/>
           <Input label="YouTube Handle/ID" value={youtube} onChange={(e) => setYoutube(e.target.value)} placeholder="@channel or channel_id" wrapperClassName="mt-2" disabled={isLoading}/>
+      </fieldset>
+
+      <fieldset className="border border-dark-border p-3 rounded-md mt-3">
+        <legend className="text-sm font-medium text-gray-300 px-1">Player Stats</legend>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-1">
+            <Input label="Speed Normal (s)" type="number" value={speedNormal} onChange={e => setSpeedNormal(e.target.value)} disabled={isLoading} />
+            <Input label="Speed Glitched (s)" type="number" value={speedGlitched} onChange={e => setSpeedGlitched(e.target.value)} disabled={isLoading} />
+            <Input label="Unusuals" type="number" value={cosmeticsUnusuals} onChange={e => setCosmeticsUnusuals(e.target.value)} disabled={isLoading} />
+            <Input label="Accessories" type="number" value={cosmeticsAccessories} onChange={e => setCosmeticsAccessories(e.target.value)} disabled={isLoading} />
+            <Input label="Time Alive (s)" type="number" value={timeAlive} onChange={e => setTimeAlive(e.target.value)} wrapperClassName="col-span-2" disabled={isLoading} />
+        </div>
       </fieldset>
 
       <div className="mt-3">
@@ -246,8 +314,8 @@ const EditUserModal: React.FC<{ user: Player; onClose: () => void }> = ({ user: 
         </div>
       </div>
 
-      <Button onClick={handleResetStats} variant="danger" className="w-full mt-3" disabled={isLoading}>
-        Reset Gameplay Stats (Speed, Economy, Cosmetics)
+      <Button onClick={handleResetStats} variant="danger" className="w-full mt-3" disabled={isLoading} leftIcon={<i className="fas fa-undo"/>}>
+        Reset Gameplay Stats (Speed & Cosmetics)
       </Button>
       <div className="flex justify-end space-x-2 mt-4">
         <Button onClick={onClose} variant="ghost" disabled={isLoading}>Cancel</Button>
@@ -301,12 +369,12 @@ export const UserManagementSection: React.FC = () => {
         <table className="min-w-full divide-y divide-dark-border">
           <thead className="bg-gray-700/50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Username</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Roblox ID</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Tier</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Badges</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Username</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Roblox ID</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Tier</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Badges</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider whitespace-nowrap">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-dark-border">

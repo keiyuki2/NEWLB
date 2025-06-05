@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { WorldRecord, Player, WorldRecordType, LeaderboardCategory } from '../../types';
 import { RobloxAvatar } from '../ui/RobloxAvatar';
@@ -13,25 +14,22 @@ interface WRPlayerCardProps {
   player: Player;
   isActive: boolean;
   isPreview?: boolean;
-  index: number; // New prop to select variant
+  index: number; 
 }
 
 const formatRecordValueDisplay = (type: WorldRecord['type'], value: number): string => {
   if (type.startsWith(LeaderboardCategory.SPEED) || type === WorldRecordType.LONGEST_SURVIVAL_ANY) {
     const minutes = Math.floor(value / 60);
     const seconds = value % 60;
-    const ms = Math.floor((value - Math.floor(value)) * 1000); // Optional: milliseconds
-    return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s` + (ms > 0 ? `.${ms.toString().padStart(3, '0')}`.slice(0,3) : ''); // show 2 decimal places for ms
+    const ms = Math.floor((value - Math.floor(value)) * 1000); 
+    return `${minutes}m ${seconds < 10 ? '0' : ''}${seconds}s` + (ms > 0 ? `.${ms.toString().padStart(3, '0')}`.slice(0,3) : ''); 
   }
-  if (type === WorldRecordType.ECONOMY_MONEY_MATCH) return `$${value.toLocaleString()}`;
-  if (type === WorldRecordType.ECONOMY_POINTS_MATCH) return `${value.toLocaleString()} pts`;
   if (type.startsWith(LeaderboardCategory.COSMETICS)) return `${value.toLocaleString()} items`;
   return value.toString();
 };
 
 const getRecordIconClass = (type: WorldRecordType): string => {
   if (type.startsWith(LeaderboardCategory.SPEED)) return "fas fa-stopwatch";
-  if (type.startsWith(LeaderboardCategory.ECONOMY)) return "fas fa-coins";
   if (type.startsWith(LeaderboardCategory.COSMETICS)) return "fas fa-gem";
   if (type === WorldRecordType.LONGEST_SURVIVAL_ANY) return "fas fa-shield-alt";
   return "fas fa-trophy";
@@ -46,9 +44,9 @@ const getRecordMode = (type: WorldRecordType): string | null => {
 }
 
 const BACKGROUND_VARIANTS = [
-  'animated-gradient-bg',             // Original Pink/Purple
-  'animated-gradient-bg-variant1',    // Blue/Teal
-  'animated-gradient-bg-variant2',    // Green/Dark
+  'animated-gradient-bg',           
+  'animated-gradient-bg-variant1',  
+  'animated-gradient-bg-variant2',  
 ];
 
 export const WRPlayerCard: React.FC<WRPlayerCardProps> = ({ record, player, isActive, isPreview = false, index }) => {
@@ -60,11 +58,11 @@ export const WRPlayerCard: React.FC<WRPlayerCardProps> = ({ record, player, isAc
     if (isActive && !isPreview) {
       setShowStatPulse(true);
       sparkleInterval = setInterval(() => {
-        if (sparkles.length < (isPreview ? 5 : 20)) { // Less sparkles for preview
+        if (sparkles.length < (isPreview ? 5 : 20)) { 
           const newSparkle: { id: string; style: React.CSSProperties } = {
             id: `sparkle-${Date.now()}-${Math.random()}`,
             style: {
-              top: `${Math.random() * 100 - 20}%`, // Emit from a wider area
+              top: `${Math.random() * 100 - 20}%`, 
               left: `${Math.random() * 100 - 20}%`,
               animationDelay: `${Math.random() * 0.4}s`,
               transform: `scale(${Math.random() * 0.7 + (isPreview ? 0.4 : 0.7)}) rotate(${Math.random() * 360}deg)`,
@@ -105,31 +103,27 @@ export const WRPlayerCard: React.FC<WRPlayerCardProps> = ({ record, player, isAc
                   ${isPreview ? 'cursor-default' : 'cursor-pointer transform hover:scale-[1.01]'}
                   ${selectedBgClass}`}
     >
-      {/* Sparkle Container */}
       <div className="absolute inset-0 pointer-events-none z-0">
         {sparkles.map(s => (
           <SparkleParticle key={s.id} id={s.id} style={s.style} onAnimationEnd={handleSparkleAnimationEnd} color="bg-pink-300" size={isPreview ? "w-1.5 h-1.5" : "w-2.5 h-2.5"} />
         ))}
       </div>
       
-      {/* Top Banner */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 py-1.5 px-3 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400 rounded-b-lg shadow-lg z-20">
         <p className="text-black font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center">
           <i className="fas fa-trophy mr-1"></i>World Record Holder
         </p>
       </div>
 
-      {/* Card Content - ensure it's above sparkles */}
-      <div className="relative z-10 flex flex-col h-full pt-10 p-3 sm:p-4"> {/* Added padding top for banner */}
+      <div className="relative z-10 flex flex-col h-full pt-10 p-3 sm:p-4"> 
         
-        {/* Player Info Section */}
         <div className="flex flex-col items-center text-center mb-2 sm:mb-3">
             <div className={`relative p-1 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg shadow-xl mb-2 w-${avatarSize/4} h-${avatarSize/4} sm:w-${avatarSize/3.5} sm:h-${avatarSize/3.5}`}>
                 <RobloxAvatar 
                     robloxId={player.robloxId} 
                     username={player.username} 
                     customAvatarUrl={player.customAvatarUrl} 
-                    size={avatarSize - (isPreview ? 8:12)} // slightly smaller than frame
+                    size={avatarSize - (isPreview ? 8:12)} 
                     className="rounded-md"
                     isVerifiedPlayer={player.isVerifiedPlayer}
                 />
@@ -140,12 +134,11 @@ export const WRPlayerCard: React.FC<WRPlayerCardProps> = ({ record, player, isAc
             <Link to={`/profile/${player.id}`}>
                 <h2 className={`text-lg sm:text-xl font-bold text-white text-shadow-glow group-hover:text-yellow-300 transition-colors ${isActive ? 'text-yellow-200' : ''}`}>{player.username}</h2>
             </Link>
-            <div className="mt-1 scale-75 sm:scale-90"> {/* Scale down badges slightly */}
+            <div className="mt-1 scale-75 sm:scale-90"> 
                 <UserBadgesList badgeIds={player.badges} maxVisible={isPreview ? 2 : 3} />
             </div>
         </div>
 
-        {/* Record Details Section */}
         <div className="flex-grow flex flex-col items-center justify-center text-center my-2 sm:my-3">
             <Tooltip text={record.type} position="top">
                 <p className="text-xs sm:text-sm font-semibold text-purple-200/90 flex items-center justify-center">
@@ -163,7 +156,6 @@ export const WRPlayerCard: React.FC<WRPlayerCardProps> = ({ record, player, isAc
             {recordMode && <p className="text-[10px] sm:text-xs font-medium text-pink-300/90 bg-black/20 px-1.5 py-0.5 rounded-full">{recordMode}</p>}
         </div>
 
-        {/* Bottom Section: Metadata & Proof */}
         <div className="mt-auto text-center border-t border-purple-500/30 pt-2 sm:pt-3">
           <div className="flex justify-between items-center text-[10px] sm:text-xs text-purple-300/70 mb-1.5 sm:mb-2">
             <span>Set: {new Date(record.timestamp).toLocaleDateString()}</span>

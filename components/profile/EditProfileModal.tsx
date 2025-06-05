@@ -19,16 +19,24 @@ interface EditProfileModalProps {
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, player }) => {
   const { updatePlayerProfile, badges: allBadgesConfig, usernameColorTags } = useAppContext();
   
-  const [username, setUsername] = useState(player.username); // Added username state
+  const [username, setUsername] = useState(player.username); 
   const [pronouns, setPronouns] = useState(player.pronouns || '');
   const [location, setLocation] = useState(player.location || '');
   const [bio, setBio] = useState(player.bio || '');
   const [socialLinks, setSocialLinks] = useState(player.socialLinks || {});
+  
   const [customAvatarFile, setCustomAvatarFile] = useState<File | null>(null);
   const [customAvatarPreview, setCustomAvatarPreview] = useState<string | null>(player.customAvatarUrl || null);
+  
+  const [customBannerFile, setCustomBannerFile] = useState<File | null>(null);
+  const [customBannerPreview, setCustomBannerPreview] = useState<string | null>(player.customProfileBannerUrl || null);
+  
   const [selectedTagId, setSelectedTagId] = useState(player.selectedUsernameTagId || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const MAX_BANNER_SIZE_MB = 5;
+  const MAX_AVATAR_SIZE_MB = 2;
 
   const unlockedColorTags = useMemo(() => {
     const tags: UsernameColorTag[] = [];
@@ -53,15 +61,28 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      if (file.size > 2 * 1024 * 1024) { // Max 2MB
-        setError("Avatar image must be less than 2MB.");
+      if (file.size > MAX_AVATAR_SIZE_MB * 1024 * 1024) {
+        setError(`Avatar image must be less than ${MAX_AVATAR_SIZE_MB}MB.`);
         setCustomAvatarFile(null);
-        // Do not clear preview here, let user see previous valid one or placeholder
         return;
       }
       setError(null);
       setCustomAvatarFile(file);
       setCustomAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+  
+  const handleBannerChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+       if (file.size > MAX_BANNER_SIZE_MB * 1024 * 1024) {
+        setError(`Banner image must be less than ${MAX_BANNER_SIZE_MB}MB.`);
+        setCustomBannerFile(null);
+        return;
+      }
+      setError(null);
+      setCustomBannerFile(file);
+      setCustomBannerPreview(URL.createObjectURL(file));
     }
   };
 
@@ -81,7 +102,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
     }
 
     let finalAvatarUrl: string | null | undefined = player.customAvatarUrl; 
-
     if (customAvatarFile) { 
         try {
             finalAvatarUrl = await new Promise<string>((resolve, reject) => {
@@ -91,22 +111,38 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
                 reader.readAsDataURL(customAvatarFile);
             });
         } catch (readError) {
-            console.error("Error reading avatar file:", readError);
-            setError("Could not process avatar image. Please try again.");
-            setIsLoading(false);
-            return;
+            setError("Could not process avatar image.");
+            setIsLoading(false); return;
         }
     } else if (customAvatarPreview === null) { 
         finalAvatarUrl = null;
     }
+
+    let finalBannerUrl: string | null | undefined = player.customProfileBannerUrl;
+    if (customBannerFile && player.canSetCustomBanner) {
+        try {
+            finalBannerUrl = await new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = (err) => reject(err);
+                reader.readAsDataURL(customBannerFile);
+            });
+        } catch (readError) {
+             setError("Could not process banner image.");
+             setIsLoading(false); return;
+        }
+    } else if (customBannerPreview === null && player.canSetCustomBanner) {
+        finalBannerUrl = null;
+    }
     
     const updateData: PlayerProfileUpdateData = {
-      username: username.trim(), // Include username
+      username: username.trim(),
       pronouns: pronouns.trim() || undefined,
       location: location.trim() || undefined,
       bio: bio.trim() || undefined,
       socialLinks,
       customAvatarUrl: finalAvatarUrl,
+      customProfileBannerUrl: player.canSetCustomBanner ? finalBannerUrl : player.customProfileBannerUrl, // Only update if allowed
       selectedUsernameTagId: selectedTagId || undefined,
     };
 
@@ -129,6 +165,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
     setCustomAvatarFile(null);
     setCustomAvatarPreview(null); 
   };
+  
+  const handleRemoveBanner = () => {
+    setCustomBannerFile(null);
+    setCustomBannerPreview(null);
+  };
 
 
   return (
@@ -146,7 +187,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
             />
             <div className="flex-grow">
                 <label htmlFor="avatarUpload" className="block text-xs font-medium text-gray-400 mb-1">
-                    Custom Avatar (Max 2MB, PNG/JPG/GIF)
+                    Custom Avatar (Max {MAX_AVATAR_SIZE_MB}MB, PNG/JPG/GIF)
                 </label>
                 <Input
                     id="avatarUpload"
@@ -160,6 +201,29 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
                 )}
             </div>
         </div>
+        
+        {player.canSetCustomBanner && (
+          <div className="space-y-2 pt-2 border-t border-dark-border">
+            <label htmlFor="bannerUpload" className="block text-xs font-medium text-gray-400">
+                Custom Profile Banner (Max {MAX_BANNER_SIZE_MB}MB, GIF/APNG/WebP)
+            </label>
+            {customBannerPreview && (
+                <div className="mb-2 rounded border border-dark-border overflow-hidden h-24 w-full">
+                    <img src={customBannerPreview} alt="Banner preview" className="w-full h-full object-cover"/>
+                </div>
+            )}
+            <Input
+                id="bannerUpload"
+                type="file"
+                accept=".gif,.png,.webp" // .png for APNG, .webp for animated WebP
+                onChange={handleBannerChange}
+                className="file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-brand-primary file:text-white hover:file:bg-purple-600"
+            />
+            {customBannerPreview && (
+                <Button type="button" variant="ghost" size="xs" onClick={handleRemoveBanner} className="mt-1 text-red-400 hover:text-red-300">Remove Banner</Button>
+            )}
+          </div>
+        )}
         
         <Input 
             label="Username" 

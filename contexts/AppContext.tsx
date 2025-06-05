@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Player, Clan, WorldRecord, Badge, Submission, SiteSettings, AppContextType, TierLevel, SubmissionStatus, LoginCredentials, SignUpCredentials, SubmissionData, ClanApplicationData, RecordVerificationData, StatUpdateProofData, PlayerProfileUpdateData, UsernameColorTag, Conversation, Message, PlayerStats, LeaderboardCategory, SpeedSubCategory, EconomySubCategory, CosmeticsSubCategory, UnreadCounts, Announcement, AnnouncementType, LeaderboardWeights } from '../types';
+import { Player, Clan, WorldRecord, Badge, Submission, SiteSettings, AppContextType, TierLevel, SubmissionStatus, LoginCredentials, SignUpCredentials, SubmissionData, ClanApplicationData, RecordVerificationData, StatUpdateProofData, PlayerProfileUpdateData, UsernameColorTag, Conversation, Message, PlayerStats, LeaderboardCategory, SpeedSubCategory, CosmeticsSubCategory, UnreadCounts, Announcement, AnnouncementType, LeaderboardWeights } from '../types';
 import { MOCK_PLAYERS, MOCK_CLANS, MOCK_WORLD_RECORDS, INITIAL_BADGES, DEFAULT_SITE_SETTINGS, MOCK_SUBMISSIONS, MOCK_USERNAME_COLOR_TAGS, MOCK_CONVERSATIONS, MOCK_MESSAGES, INITIAL_LEADERBOARD_WEIGHTS } from '../constants';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -15,6 +15,15 @@ const loadState = <T,>(key: string, defaultValue: T): T => {
       const dateKeys = ['lastActive', 'foundedDate', 'timestamp', 'submissionDate', 'joinedDate', 'lastMessageTimestamp', 'creationDate', 'displayUntil'];
       if (dateKeys.includes(k)) {
         if (v) return new Date(v);
+      }
+      if (key === 'evade_badges' && typeof v === 'object' && v !== null && 'name' in v) {
+        // Ensure isVisible defaults to true for older data
+        // Ensure value defaults to 0 if nullish (null or undefined)
+        return { 
+            ...v, 
+            isVisible: v.isVisible !== undefined ? v.isVisible : true, 
+            value: v.value ?? 0 
+        };
       }
       return v;
     });
@@ -87,11 +96,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     let loginAttempted = false;
     if (!currentUser) {
-        const adminForTesting = players.find(p => p.id === "admin_user_noah"); // Simplified to Noah for testing
-        if (adminForTesting && adminForTesting.password) { // Check for password
+        const adminUserCandidate = players.find(p => p.id === "admin_user_noah"); // Try to find Noah
+        if (adminUserCandidate && adminUserCandidate.password) { 
             loginAttempted = true;
-            loginUser({ username: adminForTesting.username, password: adminForTesting.password })
-              .catch(err => console.error("Auto-login failed", err))
+            loginUser({ username: adminUserCandidate.username, password: adminUserCandidate.password })
+              .catch(err => console.error("Auto-login for default admin failed", err))
               .finally(() => setLoading(false)); 
         }
     }
@@ -101,7 +110,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }, 200); 
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Removed players and loginUser from deps to prevent re-triggering on player data change
+  }, []); 
 
   const loginUser = useCallback(async (credentials: LoginCredentials): Promise<boolean> => {
     setLoading(true);
@@ -153,12 +162,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 email: credentials.email || undefined,
                 robloxId: credentials.robloxId || "0", 
                 tier: TierLevel.T5,
-                stats: { speedNormal: 0, speedGlitched: 0, economyMoney: 0, economyPoints: 0, cosmeticsUnusuals: 0, cosmeticsAccessories: 0, timeAlive: 0 },
+                stats: { speedNormal: 0, speedGlitched: 0, cosmeticsUnusuals: 0, cosmeticsAccessories: 0, timeAlive: 0 },
                 badges: [], lastActive: new Date(), password: credentials.password, 
-                robloxAvatarUrl: undefined, pronouns: undefined, location: undefined, bio: "", customAvatarUrl: null,
+                robloxAvatarUrl: undefined, pronouns: undefined, location: undefined, bio: "", 
+                customAvatarUrl: null, customProfileBannerUrl: null, canSetCustomBanner: false,
                 socialLinks: {}, joinedDate: new Date(), isVerifiedPlayer: false, selectedUsernameTagId: undefined, isBlacklisted: false,
             };
-            setPlayers(prevPlayers => [...prevPlayers, newPlayer]);
+            
+            let newPlayerList: Player[] = [];
+            setPlayers(prevPlayers => {
+                newPlayerList = [...prevPlayers, newPlayer];
+                return newPlayerList;
+            });
+            
+            console.log(`[AppContext] New user '${newPlayer.username}' signed up. Total players now: ${newPlayerList.length}. New player data:`, newPlayer);
+            console.log(`[AppContext] Please check localStorage for 'evade_players' to ensure persistence if issues occur after reload.`);
+
             setCurrentUser(newPlayer); 
             setLoading(false);
             resolve({ success: true });
@@ -185,12 +204,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         email: playerData.email || undefined,
         robloxId: playerData.robloxId || "0",
         tier: TierLevel.T5,
-        stats: { speedNormal: 0, speedGlitched: 0, economyMoney: 0, economyPoints: 0, cosmeticsUnusuals: 0, cosmeticsAccessories: 0, timeAlive: 0 },
+        stats: { speedNormal: 0, speedGlitched: 0, cosmeticsUnusuals: 0, cosmeticsAccessories: 0, timeAlive: 0 },
         badges: [],
         lastActive: new Date(),
         joinedDate: new Date(),
         isVerifiedPlayer: false,
         isBlacklisted: false,
+        customProfileBannerUrl: null,
+        canSetCustomBanner: false, 
     };
     setPlayers(prev => [...prev, newPlayer]);
     return { success: true, message: "Player created successfully.", player: newPlayer };
@@ -204,24 +225,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const newPlayer: Player = {
         id: `testuser_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         username: username,
-        password: "testpassword", // Standard password for test users
+        password: "testpassword", 
         email: `${username.toLowerCase().replace(/\s+/g, '')}@example.com`,
-        robloxId: Math.floor(100000 + Math.random() * 900000).toString(), // Random 6-digit Roblox ID
+        robloxId: Math.floor(100000 + Math.random() * 900000).toString(), 
         tier: TierLevel.T5,
         stats: { 
-            speedNormal: Math.floor(100 + Math.random() * 200), // Random speed between 100-300s
-            speedGlitched: Math.floor(80 + Math.random() * 150), // Random speed between 80-230s
-            economyMoney: Math.floor(Math.random() * 50000),
-            economyPoints: Math.floor(Math.random() * 10000),
+            speedNormal: Math.floor(100 + Math.random() * 200), 
+            speedGlitched: Math.floor(80 + Math.random() * 150), 
             cosmeticsUnusuals: Math.floor(Math.random() * 5),
             cosmeticsAccessories: Math.floor(Math.random() * 10),
             timeAlive: Math.floor(Math.random() * 100000),
         },
-        badges: ["beta_tester"], // Default badge
+        badges: ["beta_tester"], 
         lastActive: new Date(),
         joinedDate: new Date(),
         isVerifiedPlayer: false,
         isBlacklisted: false,
+        customProfileBannerUrl: null,
+        canSetCustomBanner: username === "BannerTester", // Example: allow specific test user
     };
     setPlayers(prev => [...prev, newPlayer]);
     return { success: true, message: `Test user "${username}" created successfully with password "testpassword".`, player: newPlayer };
@@ -264,7 +285,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 ...p, 
                 ...data, 
                 username: data.username || p.username, 
-                selectedUsernameTagId: data.selectedUsernameTagId !== undefined ? data.selectedUsernameTagId : p.selectedUsernameTagId 
+                selectedUsernameTagId: data.selectedUsernameTagId !== undefined ? data.selectedUsernameTagId : p.selectedUsernameTagId,
+                customProfileBannerUrl: data.customProfileBannerUrl !== undefined ? data.customProfileBannerUrl : p.customProfileBannerUrl,
             };
             if (currentUser?.id === playerId) setCurrentUser(updatedPlayer); 
             return updatedPlayer;
@@ -307,11 +329,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             stats: { 
                 speedNormal: 0, 
                 speedGlitched: 0, 
-                economyMoney: 0, 
-                economyPoints: 0, 
                 cosmeticsUnusuals: 0, 
                 cosmeticsAccessories: 0, 
-                timeAlive: p.stats.timeAlive // Preserve timeAlive
+                timeAlive: p.stats.timeAlive 
             } 
         };
          if (currentUser?.id === playerId) setCurrentUser(updatedPlayer);
@@ -319,7 +339,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return p;
     }));
-    alert(`Stats for ${playerUsername} have been reset. Speed, Economy, and Cosmetics are now 0. Time Alive preserved.`);
+    alert(`Stats for ${playerUsername} have been reset. Speed and Cosmetics are now 0. Time Alive preserved.`);
   }, [currentUser, setCurrentUser]);
 
   const addPlayerBadge = useCallback((playerId: string, badgeId: string) => {
@@ -349,8 +369,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!originalPlayer) return { success: false, message: "Original player not found." };
 
     if (updatedPlayerData.username !== originalPlayer.username) {
-        if (currentUser?.id !== updatedPlayerData.id) {
-             return { success: false, message: "Admins cannot change other users' usernames." };
+        if (currentUser?.id !== updatedPlayerData.id && !isAdmin) { 
+             return { success: false, message: "Users cannot change other users' usernames. Admins can make these changes if necessary." };
         }
         const existingUserWithNewName = players.find(p => p.username.toLowerCase() === updatedPlayerData.username.toLowerCase() && p.id !== updatedPlayerData.id);
         if (existingUserWithNewName) {
@@ -363,7 +383,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentUser(updatedPlayerData);
     }
     return { success: true, message: "Player updated successfully."};
-  }, [players, currentUser, setCurrentUser]);
+  }, [players, currentUser, isAdmin, setCurrentUser]);
 
   const addClan = useCallback((clanData: ClanApplicationData) => { 
     const newClan: Clan = { ...clanData, id: `clan${Date.now()}`, memberCount: 1, members: [clanData.leaderId], activityStatus: "Recruiting", foundedDate: new Date(), isVerified: false };
@@ -401,13 +421,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                             if (p.id === playerId) {
                                 const newStats: PlayerStats = {...p.stats};
                                 if (category === LeaderboardCategory.SPEED) {
-                                    // Current PlayerStats structure only supports general speedNormal/Glitched.
-                                    // Map-specific logic would require newStats.speedNormal[mapName] = newValue;
                                     if (subCategory === SpeedSubCategory.NORMAL) newStats.speedNormal = newValue;
                                     else if (subCategory === SpeedSubCategory.GLITCHED) newStats.speedGlitched = newValue;
-                                } else if (category === LeaderboardCategory.ECONOMY) {
-                                    if (subCategory === EconomySubCategory.MONEY) newStats.economyMoney = newValue;
-                                    else if (subCategory === EconomySubCategory.POINTS) newStats.economyPoints = newValue;
                                 } else if (category === LeaderboardCategory.COSMETICS) {
                                     if (subCategory === CosmeticsSubCategory.UNUSUALS) newStats.cosmeticsUnusuals = newValue;
                                     else if (subCategory === CosmeticsSubCategory.ACCESSORIES) newStats.cosmeticsAccessories = newValue;
@@ -428,14 +443,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [addClan, currentUser, setCurrentUser]); 
 
   const createBadge = useCallback((badgeData: Omit<Badge, 'id'>) => { 
-    const newBadge: Badge = { ...badgeData, id: `badge_${Date.now()}_${badgeData.name.replace(/\s+/g, '_')}` }; 
+    const newBadge: Badge = { 
+        ...badgeData, 
+        id: `badge_${Date.now()}_${badgeData.name.replace(/\s+/g, '_')}`,
+        value: badgeData.value ?? 0,
+        isVisible: badgeData.isVisible !== undefined ? badgeData.isVisible : true,
+    }; 
     setBadges(prev => [...prev, newBadge]); 
   }, []);
 
   const updateBadge = useCallback((badgeId: string, badgeData: Partial<Omit<Badge, 'id'>>) => {
     setBadges(prevBadges => prevBadges.map(b => {
         if (b.id === badgeId) {
-            return { ...b, ...badgeData };
+            // Ensure value defaults to existing value if not provided, or 0 if it becomes undefined
+            const newValue = badgeData.value !== undefined ? badgeData.value : b.value;
+            return { 
+                ...b, 
+                ...badgeData, 
+                value: newValue ?? 0, // Ensure value is always number or 0
+                isVisible: badgeData.isVisible !== undefined ? badgeData.isVisible : b.isVisible,
+            };
         }
         return b;
     }));
@@ -598,27 +625,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [announcements]);
 
   const refreshLeaderboard = useCallback(async () => {
-    // This is a conceptual placeholder for now.
-    // In a real app, this might re-fetch data, re-calculate rankings, etc.
     console.log("Leaderboard refresh initiated by admin command...");
     setLoading(true);
-    // Simulate some async work
     await new Promise(resolve => setTimeout(resolve, 1000)); 
     setLoading(false);
     console.log("Leaderboard refresh complete.");
-    // Potentially trigger a re-render of leaderboard components if necessary,
-    // though React's state updates should handle this if data sources change.
   }, []);
 
   const resetLeaderboardForSeason = useCallback(async () => {
     setLoading(true);
     console.log("Initiating season reset for leaderboards and stats...");
     
-    // 1. Clear all World Records
     setWorldRecords([]);
     console.log("All world records have been cleared.");
 
-    // 2. Reset relevant player stats
     setPlayers(prevPlayers => 
       prevPlayers.map(player => ({
         ...player,
@@ -626,31 +646,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           ...player.stats,
           speedNormal: 0,
           speedGlitched: 0,
-          economyMoney: 0,
-          economyPoints: 0,
-          // Keep cosmetics and timeAlive
+          cosmeticsUnusuals: player.stats.cosmeticsUnusuals, 
+          cosmeticsAccessories: player.stats.cosmeticsAccessories,
+          timeAlive: player.stats.timeAlive 
         }
       }))
     );
-    console.log("Player speed and economy stats have been reset to 0 for all players.");
-
-    // Potentially add other season reset tasks here (e.g., archive old data, update season counters)
+    console.log("Player speed stats have been reset to 0 for all players. Cosmetics and Time Alive preserved.");
     
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate async operations
+    await new Promise(resolve => setTimeout(resolve, 500)); 
     setLoading(false);
     console.log("Season reset complete.");
-    alert("Leaderboards and player stats (Speed, Economy) have been reset for the new season. World Records cleared.");
+    alert("Leaderboards and player stats (Speed) have been reset for the new season. World Records cleared. Cosmetics & Time Alive preserved.");
   }, []);
 
   const updateLeaderboardWeights = useCallback((newWeights: LeaderboardWeights) => {
     const totalWeight = Object.values(newWeights).reduce((sum, w) => sum + w, 0);
     if (totalWeight !== 100) {
       alert("Error: Leaderboard weights must sum to 100%. Please adjust.");
-      // Optionally, don't update if they don't sum to 100, or normalize them.
-      // For now, we'll still set them but the admin UI should prevent this state.
     }
     setLeaderboardWeights(newWeights);
-    alert("Leaderboard weights updated. Overall scores will reflect this change on next calculation/view.");
   }, []);
 
 
@@ -669,6 +684,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                             `/tier <username> <T1|T2|T3|T4|T5> - Sets a user's tier.\n` +
                             `/setrank <username> <T1|T2|T3|T4|T5> - Alias for /tier.\n` +
                             `/verify_player <username> <true|false> - Sets player verification status.\n` +
+                            `/set_banner_perm <username> <true|false> - Sets player custom banner permission.\n`+
                             `/announce <type> <message> - Creates and publishes a global announcement (type: info, success, warning, error).\n` +
                             `/refreshleaderboard - Simulates a leaderboard refresh.\n` +
                             `/resetseason - Resets all leaderboards and key player stats for a new season (USE WITH CAUTION).\n`+
@@ -678,12 +694,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { success: true, message: helpMessage };
     }
      if (cmd === "/resetseason") {
-        const confirmReset = window.confirm("CRITICAL: Are you sure you want to reset all World Records and key player stats (Speed, Economy) for a new season? This action is IRREVERSIBLE and will affect all users.");
+        const confirmReset = window.confirm("CRITICAL: Are you sure you want to reset all World Records and key player stats (Speed) for a new season? This action is IRREVERSIBLE and will affect all users.");
         if (confirmReset) {
             const doubleConfirm = window.prompt("To confirm, type 'RESET ALL DATA' in all caps:");
             if (doubleConfirm === "RESET ALL DATA") {
                 await resetLeaderboardForSeason();
-                return { success: true, message: "Season reset process initiated. World Records cleared, player Speed/Economy stats reset." };
+                return { success: true, message: "Season reset process initiated. World Records cleared, player Speed stats reset." };
             } else {
                 return { success: false, message: "Season reset cancelled. Confirmation phrase incorrect." };
             }
@@ -736,7 +752,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const badgeIdToDelete = args[1];
             const badgeToDelete = badges.find(b => b.id.toLowerCase() === badgeIdToDelete.toLowerCase());
             if (!badgeToDelete) return { success: false, message: `Badge ID '${badgeIdToDelete}' not found.` };
-            deleteBadge(badgeToDelete.id); // deleteBadge function already shows an alert
+            deleteBadge(badgeToDelete.id); 
             return { success: true, message: `Badge '${badgeToDelete.name}' (ID: ${badgeToDelete.id}) scheduled for deletion.` };
         } else {
             return { success: false, message: "Invalid /badge subcommand. Use add, remove, or delete." };
@@ -761,6 +777,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setCurrentUser({...playerToVerify, isVerifiedPlayer: verifyStatus});
         }
         return { success: true, message: `Player ${playerToVerify.username} verification status set to ${verifyStatus}.` };
+    }
+     if (cmd === "/set_banner_perm") {
+        if (args.length < 2) return { success: false, message: "Usage: /set_banner_perm <username> <true|false>" };
+        const playerToUpdate = players.find(p => p.username.toLowerCase() === args[0].toLowerCase());
+        if (!playerToUpdate) return { success: false, message: `Player '${args[0]}' not found.`};
+        const canSet = args[1].toLowerCase() === 'true';
+        updatePlayer({ ...playerToUpdate, canSetCustomBanner: canSet });
+        return { success: true, message: `Player ${playerToUpdate.username} custom banner permission set to ${canSet}.` };
     }
     if (cmd === "/announce") {
         if (args.length < 2) return { success: false, message: "Usage: /announce <type (info|success|warning|error)> <message>" };
@@ -788,23 +812,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (cmd === "/addtestuser") {
         if (args.length < 1) return { success: false, message: "Usage: /addtestuser <username>" };
         const result = await createTestUser(args[0]);
-        return { // Ensure the returned object matches executeAdminCommand's return type
+        return { 
             success: result.success,
-            message: result.message, // result.message is now string
+            message: result.message, 
         };
     }
     if (cmd === "/resetstats") {
         if (args.length < 1) return { success: false, message: "Usage: /resetstats <username>" };
         const playerToReset = players.find(p => p.username.toLowerCase() === args[0].toLowerCase());
         if (!playerToReset) return { success: false, message: `Player '${args[0]}' not found.` };
-        resetPlayerStats(playerToReset.id); // resetPlayerStats already shows an alert
+        resetPlayerStats(playerToReset.id); 
         return { success: true, message: `Stats reset initiated for ${playerToReset.username}.` };
     }
 
 
     return { success: false, message: `Unknown command: ${cmd}` };
   } 
-  , [players, badges, addPlayerBadge, removePlayerBadge, deleteBadge, updatePlayerTier, setPlayerBlacklistedStatus, createAnnouncement, publishAnnouncement, refreshLeaderboard, createTestUser, resetPlayerStats, setPlayers, currentUser, setCurrentUser, deletePlayer, resetLeaderboardForSeason]);
+  , [players, badges, addPlayerBadge, removePlayerBadge, deleteBadge, updatePlayerTier, setPlayerBlacklistedStatus, createAnnouncement, publishAnnouncement, refreshLeaderboard, createTestUser, resetPlayerStats, setPlayers, currentUser, setCurrentUser, deletePlayer, resetLeaderboardForSeason, updatePlayer]);
 
 
   return (

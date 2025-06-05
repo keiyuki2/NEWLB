@@ -7,7 +7,7 @@ import { useAppContext } from '../../contexts/AppContext';
 interface UserBadgesListProps {
   badgeIds: string[];
   maxVisible?: number;
-  onClick?: () => void; // New prop
+  onClick?: () => void; 
 }
 
 export const UserBadgesList: React.FC<UserBadgesListProps> = ({ badgeIds, maxVisible = 5, onClick }) => {
@@ -15,12 +15,13 @@ export const UserBadgesList: React.FC<UserBadgesListProps> = ({ badgeIds, maxVis
 
   const userBadges = badgeIds
     .map(id => allBadges.find(b => b.id === id))
-    .filter(Boolean) as Badge[];
+    .filter(Boolean)
+    .filter(badge => (badge as Badge).isVisible) as Badge[];
   
   const sortedBadges = userBadges.sort((a, b) => {
     const priority: Record<string, number> = {
         "verified_yt": 1, "verified_tiktok": 1,
-        "game_admin": 2, "moderator": 3,
+        "game_admin": 2, "moderator": 3, "staff_badge": 2, // Added staff_badge priority
     };
     return (priority[a.id] || 10) - (priority[b.id] || 10);
   });

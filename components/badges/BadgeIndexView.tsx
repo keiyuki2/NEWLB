@@ -1,72 +1,35 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { Card } from '../ui/Card';
 import { Badge, BadgeCategory, UsernameColorTag } from '../../types';
 import { Tabs } from '../ui/Tabs';
 import { BADGE_CATEGORIES_TABS, INITIAL_BADGES } from '../../constants';
 import { RewardPreviewModal } from './RewardPreviewModal'; 
+import { BadgeCardItemIndex } from './BadgeCardItemIndex'; // Import the sub-component
 
-const BadgeCardItemIndex: React.FC<{ badge: Badge; onClickShowPreview: (tag: UsernameColorTag | null) => void }> = ({ badge, onClickShowPreview }) => {
-  const { usernameColorTags } = useAppContext();
-  const linkedColorTag = badge.colorTagId ? usernameColorTags.find(tag => tag.id === badge.colorTagId) : undefined;
-
-  const handleClick = () => {
-    if (linkedColorTag) {
-      onClickShowPreview(linkedColorTag);
-    } else if (badge.usernameColorUnlock) { // Handle direct unlock for preview
-      onClickShowPreview({
-        id: `direct-${badge.id}`,
-        name: `${badge.name} Style`,
-        cssClasses: badge.usernameColorUnlock.textClasses,
-        description: badge.usernameColorUnlock.description,
-      });
-    }
-    // If no reward, onClickShowPreview(null) can be called or nothing happens
-  };
-
-  return (
-    <div 
-      className="bg-dark-surface p-4 rounded-lg border border-dark-border flex flex-col items-start space-y-2 h-full hover:shadow-lg hover:border-brand-accent/50 transition-all duration-200 cursor-pointer"
-      onClick={handleClick} // Changed from hover to click
-    >
-      <div className="flex items-center space-x-3 w-full">
-        <div className={`text-3xl ${badge.colorClass} w-10 h-10 flex items-center justify-center flex-shrink-0`}>
-          <i className={badge.iconClass}></i>
-        </div>
-        <div>
-            <h3 className="text-md font-semibold text-gray-100">{badge.name}</h3>
-            <p className="text-xs text-gray-400">{badge.description}</p>
-        </div>
-      </div>
-      <p className="text-xs text-gray-500 mt-1 flex-grow">{badge.unlockCriteria}</p>
-      {(badge.colorTagId || badge.usernameColorUnlock) && (
-        <div className="mt-auto pt-2 border-t border-dark-border/50 w-full">
-            <p className="text-xs text-yellow-400 flex items-center">
-                <i className="fas fa-palette mr-1.5"></i> 
-                {linkedColorTag?.name || badge.usernameColorUnlock?.description || "Unlocks Username Style"}
-            </p>
-        </div>
-      )}
-    </div>
-  );
-};
 
 export const BadgeIndexView: React.FC = () => {
   const { badges: allBadgesFromContext } = useAppContext();
   const [activeTab, setActiveTab] = useState(0);
   const [previewTag, setPreviewTag] = useState<UsernameColorTag | null>(null);
 
-  const achievementBadgesForHowTo = INITIAL_BADGES.filter(b => ["survivalist", "top_reviver", "speed_king"].includes(b.id));
-  const specialBadgesForHowTo = INITIAL_BADGES.filter(b => ["beta_tester", "verified_yt", "game_admin"].includes(b.id));
+  const achievementBadgesForHowTo = useMemo(() => 
+    INITIAL_BADGES.filter(b => ["clan_founder", "speed_demon", "collector_adept"].includes(b.id) && b.isVisible)
+  , []);
+  const specialBadgesForHowTo = useMemo(() => 
+    INITIAL_BADGES.filter(b => ["beta_tester", "verified_yt", "game_admin"].includes(b.id) && b.isVisible)
+  , []);
 
   const selectedCategory = BADGE_CATEGORIES_TABS[activeTab]?.category;
   
   const getBadgesForTab = () => {
+    const publiclyVisibleBadges = allBadgesFromContext.filter(badge => badge.isVisible);
     if (selectedCategory) {
-        return allBadgesFromContext.filter(badge => badge.category === selectedCategory);
+        return publiclyVisibleBadges.filter(badge => badge.category === selectedCategory);
     }
-    return allBadgesFromContext; 
+    return publiclyVisibleBadges; 
   }
 
   const displayedBadges = getBadgesForTab();
@@ -76,7 +39,7 @@ export const BadgeIndexView: React.FC = () => {
   };
 
   const tabItems = BADGE_CATEGORIES_TABS.map(tabInfo => ({
-    label: tabInfo.label,
+    label: `${tabInfo.label}${tabInfo.category ? ` (${getBadgesForTab().filter(b => b.category === tabInfo.category).length})` : ` (${getBadgesForTab().length})`}`,
     content: (
       displayedBadges.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -96,7 +59,7 @@ export const BadgeIndexView: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-100 mb-1">Badge Index</h1>
         <p className="text-md text-gray-400">
-          Explore all available badges. They can be earned through achievements, assigned by staff, or obtained during special events.
+          Explore all publicly available badges. They can be earned through achievements, assigned by staff, or obtained during special events. Click on a badge to see style previews if applicable.
         </p>
       </div>
 

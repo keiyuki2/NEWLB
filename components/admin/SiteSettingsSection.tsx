@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { SiteSettings, BadgeCategory } from '../../types';
 import { useAppContext } from '../../contexts/AppContext';
@@ -6,6 +7,7 @@ import { Input, TextArea } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
 import { Card } from '../ui/Card';
+import { Alert } from '../ui/Alert'; // Import Alert
 
 const BADGE_CATEGORY_OPTIONS: { value: BadgeCategory; label: string }[] = [
     { value: "Achievement", label: "Achievement" },
@@ -74,7 +76,7 @@ const BadgeCreatorPanel: React.FC = () => {
 export const SiteSettingsSection: React.FC = () => {
   const { siteSettings, updateSiteSettings } = useAppContext();
   const [currentSettings, setCurrentSettings] = useState<SiteSettings>(siteSettings);
-  const [isSaved, setIsSaved] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setCurrentSettings(siteSettings);
@@ -82,13 +84,13 @@ export const SiteSettingsSection: React.FC = () => {
 
   const handleChange = <K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) => {
     setCurrentSettings(prev => ({ ...prev, [key]: value }));
-    setIsSaved(false);
+    setSuccessMessage(null); // Clear success message on change
   };
 
   const handleSave = () => {
     updateSiteSettings(currentSettings);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+    setSuccessMessage("Site settings saved successfully!");
+    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   const themeOptions = [
@@ -108,6 +110,12 @@ export const SiteSettingsSection: React.FC = () => {
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold text-gray-100">Site Settings</h2>
       
+      {successMessage && (
+        <Alert type="success" onClose={() => setSuccessMessage(null)}>
+          {successMessage}
+        </Alert>
+      )}
+
       <Card title="Appearance" titleIcon={<i className="fas fa-paint-brush"/>}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
@@ -154,13 +162,20 @@ export const SiteSettingsSection: React.FC = () => {
             rows={8}
             placeholder="Enter frequently asked questions and answers..."
           />
+           <TextArea
+            label="Submission Guidelines Content (Markdown)"
+            value={currentSettings.submissionGuidelinesContent}
+            onChange={(e) => handleChange('submissionGuidelinesContent', e.target.value)}
+            rows={8}
+            placeholder="Enter guidelines for submitting proofs..."
+          />
         </div>
       </Card>
 
-      <BadgeCreatorPanel />
+      {/* BadgeCreatorPanel is now in ToolsSection */}
+      {/* <BadgeCreatorPanel /> */}
 
       <div className="flex justify-end items-center mt-8 space-x-3">
-        {isSaved && <p className="text-green-400 text-sm">Settings saved successfully!</p>}
         <Button onClick={handleSave} variant="primary" size="lg" leftIcon={<i className="fas fa-save"/>}>
           Save All Settings
         </Button>

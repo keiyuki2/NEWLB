@@ -8,26 +8,7 @@ import { Badge, CollectionRank } from '../../types';
 import { Button } from '../ui/Button'; 
 import { Tooltip } from '../ui/Tooltip';
 import { COLLECTION_RANKS } from '../../constants';
-
-// Individual Badge Item for the Collection View
-const CollectionBadgeItem: React.FC<{ badge: Badge; isObtained: boolean }> = ({ badge, isObtained }) => {
-  return (
-    <div 
-      className={`p-3 border rounded-lg flex flex-col items-center justify-center text-center h-full transition-all duration-200 ease-in-out
-        ${isObtained ? 'bg-dark-surface border-dark-border shadow-md hover:border-brand-accent/70' : 'bg-gray-800/30 border-gray-700/50 filter grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
-    >
-      <div className={`text-3xl mb-2 ${isObtained ? badge.colorClass : 'text-gray-500'}`}>
-        <i className={badge.iconClass}></i>
-      </div>
-      <h3 className={`text-sm font-semibold ${isObtained ? 'text-gray-100' : 'text-gray-400'}`}>{badge.name}</h3>
-      <p className={`text-xs ${isObtained ? 'text-gray-400' : 'text-gray-500'}`}>{badge.description}</p>
-      <p className={`mt-1 text-xs font-bold ${isObtained ? 'text-brand-accent' : 'text-gray-600'}`}>
-        Value: {badge.value}
-      </p>
-      {!isObtained && <div className="mt-1 text-[10px] text-gray-500">(Locked)</div>}
-    </div>
-  );
-};
+import { CollectionBadgeItem } from './CollectionBadgeItem';
 
 
 // Badge Index Button with Hover Effect
@@ -79,14 +60,18 @@ const BadgeIndexButton: React.FC = () => {
 export const BadgesDisplayPage: React.FC = () => {
   const { badges: allBadgesConfig, currentUser } = useAppContext();
 
-  const totalPossibleValue = useMemo(() => 
-    allBadgesConfig.reduce((sum, badge) => sum + badge.value, 0)
+  const publiclyVisibleBadges = useMemo(() => 
+    allBadgesConfig.filter(b => b.isVisible)
   , [allBadgesConfig]);
+
+  const totalPossibleValue = useMemo(() => 
+    publiclyVisibleBadges.reduce((sum, badge) => sum + (badge.value || 0), 0)
+  , [publiclyVisibleBadges]);
 
   const currentUserBadgeValue = useMemo(() => 
     currentUser
       ? currentUser.badges.reduce((sum, badgeId) => {
-          const badge = allBadgesConfig.find(b => b.id === badgeId);
+          const badge = allBadgesConfig.find(b => b.id === badgeId); 
           return sum + (badge?.value || 0);
         }, 0)
       : 0
@@ -138,34 +123,37 @@ export const BadgesDisplayPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
+          <div className="w-full bg-gray-700 rounded-full h-2.5 dark:bg-gray-700">
             <div 
                 className="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
-                style={{ width: `${totalPossibleValue > 0 ? (currentUserBadgeValue / totalPossibleValue) * 100 : 0}%` }}>
-            </div>
+                style={{ width: `${nextCollectionRank && nextCollectionRank.pointsRequired > 0 ? (currentUserBadgeValue / nextCollectionRank.pointsRequired) * 100 : (currentUserBadgeValue > 0 ? 100 : 0)}%` }}
+            ></div>
           </div>
           {nextCollectionRank ? (
-            <p className="text-sm text-gray-300 mt-2">
-              Next Rank: <span className="font-semibold text-gray-100">{nextCollectionRank.name}</span> - Needs <span className="font-semibold text-brand-accent">{pointsToNextRank.toLocaleString()}</span> more points.
-            </p>
+             <p className="text-xs text-gray-400 mt-1.5 text-right">
+                {pointsToNextRank.toLocaleString()} points to <span className="font-semibold text-gray-300">{nextCollectionRank.name}</span>
+             </p>
           ) : (
-            <p className="text-sm text-green-400 font-semibold mt-2">You've reached the highest rank!</p>
+            <p className="text-xs text-green-400 mt-1.5 text-right">
+                <i className="fas fa-check-circle mr-1"></i> You've reached the highest rank!
+            </p>
           )}
         </Card>
       )}
-
-      <Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {allBadgesConfig.sort((a,b) => b.value - a.value).map(badge => (
-            <CollectionBadgeItem 
-              key={badge.id} 
-              badge={badge} 
-              isObtained={currentUser?.badges.includes(badge.id) || false} 
-            />
-          ))}
-        </div>
-        {allBadgesConfig.length === 0 && (
-            <p className="text-center text-gray-500 py-8">No badges are currently configured.</p>
+        
+      <Card title="All Publicly Viewable Badges" titleIcon={<i className="fas fa-medal opacity-80"/>}>
+        {publiclyVisibleBadges.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {publiclyVisibleBadges.map(badge => (
+                <CollectionBadgeItem 
+                    key={badge.id} 
+                    badge={badge} 
+                    isObtained={currentUser?.badges.includes(badge.id) || false} 
+                />
+            ))}
+            </div>
+        ) : (
+            <p className="text-gray-400 text-center py-6">No badges are currently available for display.</p>
         )}
       </Card>
     </div>

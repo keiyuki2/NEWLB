@@ -10,7 +10,6 @@ export enum TierLevel {
 
 export enum LeaderboardCategory {
   SPEED = "Speed",
-  ECONOMY = "Economy",
   COSMETICS = "Cosmetics",
 }
 
@@ -19,11 +18,6 @@ export type LeaderboardWeights = Record<LeaderboardCategory, number>;
 export enum SpeedSubCategory {
   NORMAL = "Normal",
   GLITCHED = "Glitched",
-}
-
-export enum EconomySubCategory {
-  MONEY = "Money",
-  POINTS = "Points",
 }
 
 export enum CosmeticsSubCategory {
@@ -49,8 +43,9 @@ export interface Badge {
   iconClass: string; 
   colorClass: string; 
   unlockCriteria: string; 
-  value: number; 
+  value?: number; // Can be 0 or undefined
   category: BadgeCategory;
+  isVisible: boolean; // New property
   usernameColorUnlock?: { 
     textClasses: string[]; 
     description: string; 
@@ -61,8 +56,6 @@ export interface Badge {
 export interface PlayerStats {
   speedNormal: number; // Time in seconds, lower is better
   speedGlitched: number; // Time in seconds, lower is better
-  economyMoney: number; // Higher is better
-  economyPoints: number; // Higher is better
   cosmeticsUnusuals: number; // Count, higher is better
   cosmeticsAccessories: number; // Count, higher is better
   timeAlive: number; // Total seconds, higher is better
@@ -85,6 +78,8 @@ export interface Player {
   location?: string;
   bio?: string;
   customAvatarUrl?: string | null; 
+  customProfileBannerUrl?: string | null; // New: For custom profile banners (GIFs, etc.)
+  canSetCustomBanner?: boolean; // New: Permission to set custom banner
   socialLinks?: {
     twitch?: string;
     youtube?: string;
@@ -95,7 +90,7 @@ export interface Player {
   joinedDate?: Date; 
   isVerifiedPlayer?: boolean; 
   selectedUsernameTagId?: string; 
-  isBlacklisted?: boolean; // New field
+  isBlacklisted?: boolean; 
 }
 
 export interface Clan {
@@ -121,8 +116,6 @@ export enum WorldRecordType {
   SPEED_GLITCHED_FACILITY = "Speed - Glitched - Facility",
   SPEED_GLITCHED_COMPOUND = "Speed - Glitched - Compound",
   SPEED_GLITCHED_SITE_OMEGA = "Speed - Glitched - Site Omega",
-  ECONOMY_MONEY_MATCH = "Economy - Money (Match)",
-  ECONOMY_POINTS_MATCH = "Economy - Points (Match)",
   COSMETICS_UNUSUALS_TOTAL = "Cosmetics - Unusuals (Total)",
   COSMETICS_ACCESSORIES_TOTAL = "Cosmetics - Accessories (Total)",
   LONGEST_SURVIVAL_ANY = "Longest Survival (Any Mode)",
@@ -162,7 +155,7 @@ export type SubmissionType = "ClanApplication" | "RecordVerification" | "BadgePr
 export interface StatUpdateProofData {
   playerId: string;
   category: LeaderboardCategory;
-  subCategory: SpeedSubCategory | EconomySubCategory | CosmeticsSubCategory | string; 
+  subCategory: SpeedSubCategory | CosmeticsSubCategory | string; 
   mapName?: string; 
   newValue: number;
   videoProofUrl: string;
@@ -210,11 +203,12 @@ export interface SignUpCredentials extends LoginCredentials {
 }
 
 export interface PlayerProfileUpdateData {
-    username?: string; // Added for username change
+    username?: string; 
     pronouns?: string;
     location?: string;
     bio?: string;
     customAvatarUrl?: string | null;
+    customProfileBannerUrl?: string | null; // New: Banner URL for profile update
     socialLinks?: Player['socialLinks'];
     selectedUsernameTagId?: string;
 }
@@ -284,16 +278,17 @@ export interface AppContextType {
   
   // Player Admin Functions
   createPlayer: (playerData: Pick<Player, 'username' | 'password' | 'robloxId' | 'email'>) => Promise<{success: boolean; message?: string; player?: Player}>;
-  createTestUser: (username: string) => Promise<{success: boolean; message: string; player?: Player}>; // New, message non-optional
+  createTestUser: (username: string) => Promise<{success: boolean; message: string; player?: Player}>; 
   deletePlayer: (playerId: string) => void;
   setPlayerBlacklistedStatus: (playerId: string, isBlacklisted: boolean) => void;
+  // togglePlayerCanSetCustomBanner: (playerId: string) => void; // This will be handled via updatePlayer
 
   updatePlayerTier: (playerId: string, tier: TierLevel) => void;
   resetPlayerStats: (playerId: string) => void; 
   addPlayerBadge: (playerId: string, badgeId: string) => void;
   removePlayerBadge: (playerId: string, badgeId: string) => void;
-  updatePlayer: (player: Player) => Promise<{success: boolean; message?: string}>; // Modified to return status
-  updatePlayerProfile: (playerId: string, data: PlayerProfileUpdateData) => Promise<{success: boolean; message?: string}>; // Modified for username change
+  updatePlayer: (player: Player) => Promise<{success: boolean; message?: string}>; 
+  updatePlayerProfile: (playerId: string, data: PlayerProfileUpdateData) => Promise<{success: boolean; message?: string}>; 
   togglePlayerVerification: (playerId: string) => void;
 
   approveClan: (clanId: string) => void;
@@ -310,8 +305,8 @@ export interface AppContextType {
   submitStatUpdateProof: (data: StatUpdateProofData) => void;
   processSubmission: (submissionId: string, newStatus: SubmissionStatus, reason?: string) => void;
   
-  createBadge: (badge: Omit<Badge, 'id'>) => void;
-  updateBadge: (badgeId: string, badgeData: Partial<Omit<Badge, 'id'>>) => void; 
+  createBadge: (badgeData: Omit<Badge, 'id'>) => void;
+  updateBadge: (badgeId: string, badgeData: Partial<Omit<Badge, 'id'>>) => void;
   deleteBadge: (badgeId: string) => void; 
 
   updateSiteSettings: (settings: Partial<SiteSettings>) => void;

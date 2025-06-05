@@ -1,17 +1,16 @@
 
-import React, { useState, useMemo } from 'react'; // Added useMemo
+import React, { useState, useMemo } from 'react'; 
 import { Tabs } from '../ui/Tabs';
 import { AdminDashboard } from './AdminDashboard';
 import { UserManagementSection } from './UserManagementSection';
 import { SubmissionsQueueSection } from './SubmissionsQueueSection';
 import { SiteSettingsSection } from './SiteSettingsSection'; 
-import { UsernameColorTagManagementSection } from './UsernameColorTagManagementSection';
 import { ManageBadgesSection } from './ManageBadgesSection';
 import { ToolsSection } from './ToolsSection';
 import { useAppContext } from '../../contexts/AppContext';
 import { Navigate } from 'react-router-dom';
 import { LoadingSpinner } from '../ui/LoadingSpinner';
-import { LeaderboardManagementSection } from './LeaderboardManagementSection'; // New Import
+import { LeaderboardManagementSection } from './LeaderboardManagementSection'; 
 
 export const AdminPanelPage: React.FC = () => {
   const { isAdmin, loading, currentUser } = useAppContext();
@@ -41,7 +40,7 @@ export const AdminPanelPage: React.FC = () => {
     { label: "Manage Badges", icon: <i className="fas fa-tasks"></i>, content: <ManageBadgesSection /> },
     { label: "Leaderboard Mgmt", icon: <i className="fas fa-trophy"></i>, content: <LeaderboardManagementSection /> },
     { label: "Tools", icon: <i className="fas fa-tools"></i>, content: <ToolsSection /> },
-    { label: "Username Tags", icon: <i className="fas fa-palette"></i>, content: <UsernameColorTagManagementSection /> },
+    // Username Tags tab removed from here, will be in ToolsSection
     { label: "Site Settings", icon: <i className="fas fa-cogs"></i>, content: <SiteSettingsSection /> },
   ], []); 
 
