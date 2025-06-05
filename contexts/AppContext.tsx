@@ -94,21 +94,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
 
   useEffect(() => {
-    let loginAttempted = false;
-    if (!currentUser) {
-        const adminUserCandidate = players.find(p => p.id === "admin_user_noah"); // Try to find Noah
-        if (adminUserCandidate && adminUserCandidate.password) { 
-            loginAttempted = true;
-            loginUser({ username: adminUserCandidate.username, password: adminUserCandidate.password })
-              .catch(err => console.error("Auto-login for default admin failed", err))
-              .finally(() => setLoading(false)); 
-        }
-    }
-    if (!loginAttempted) { 
-        setTimeout(() => {
-          setLoading(false);
-        }, 200); 
-    }
+    // currentUser is already loaded from localStorage by useState's initialValue.
+    // If currentUser exists (from a previous session on THIS BROWSER), they are "logged in".
+    // If not, they are not logged in. No automatic login for a default user should occur.
+    // The 'loading' state primarily indicates that initial state hydration from localStorage is complete.
+    setLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
 

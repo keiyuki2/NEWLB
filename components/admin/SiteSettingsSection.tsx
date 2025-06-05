@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { SiteSettings, BadgeCategory } from '../../types';
 import { useAppContext } from '../../contexts/AppContext';
@@ -27,6 +26,7 @@ const BadgeCreatorPanel: React.FC = () => {
     const [unlockCriteria, setUnlockCriteria] = useState('');
     const [value, setValue] = useState(0);
     const [category, setCategory] = useState<BadgeCategory>('General');
+    const [isVisible, setIsVisible] = useState(true); // Added isVisible state
 
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -35,17 +35,18 @@ const BadgeCreatorPanel: React.FC = () => {
             alert("Name, icon, color, and category are required for a badge.");
             return;
         }
-        if (value <= 0) {
-            alert("Badge value must be a positive number.");
+        if (value < 0) { // Allow 0, check for negative
+            alert("Badge value must be a non-negative number.");
             return;
         }
-        createBadge({ name, description, iconClass, colorClass, unlockCriteria, value, category });
-        setName(''); setDescription(''); setIconClass('fas fa-star'); setColorClass('text-yellow-400'); setUnlockCriteria(''); setValue(0); setCategory('General');
+        createBadge({ name, description, iconClass, colorClass, unlockCriteria, value, category, isVisible }); // Added isVisible
+        setName(''); setDescription(''); setIconClass('fas fa-star'); setColorClass('text-yellow-400'); 
+        setUnlockCriteria(''); setValue(0); setCategory('General'); setIsVisible(true); // Reset isVisible
         alert("Badge created!");
     };
     
     return (
-        <Card title="Badge Creator" titleIcon={<i className="fas fa-id-badge"/>}>
+        <Card title="Badge Creator (Conceptual Placeholder)" titleIcon={<i className="fas fa-id-badge"/>}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Input label="Badge Name" value={name} onChange={e => setName(e.target.value)} required />
                 <Select 
@@ -59,7 +60,19 @@ const BadgeCreatorPanel: React.FC = () => {
                 <Input label="Font Awesome Icon Class (e.g., fas fa-star)" value={iconClass} onChange={e => setIconClass(e.target.value)} required />
                 <Input label="Tailwind Color Class (e.g., text-yellow-400)" value={colorClass} onChange={e => setColorClass(e.target.value)} required />
                 <TextArea label="Unlock Criteria" value={unlockCriteria} onChange={e => setUnlockCriteria(e.target.value)} />
-                <Input label="Badge Value (Points)" type="number" value={value.toString()} onChange={e => setValue(parseInt(e.target.value, 10) || 0)} required />
+                <Input label="Badge Value (Points, 0 for no points)" type="number" value={value.toString()} onChange={e => setValue(parseInt(e.target.value, 10) || 0)} min="0" required />
+                
+                <div className="flex items-center space-x-3">
+                    <label htmlFor="badgeIsVisibleConceptual" className="text-sm text-gray-300">Publicly Visible:</label>
+                    <input
+                        type="checkbox"
+                        id="badgeIsVisibleConceptual"
+                        checked={isVisible}
+                        onChange={(e) => setIsVisible(e.target.checked)}
+                        className="h-4 w-4 text-brand-primary bg-dark-bg border-dark-border rounded focus:ring-brand-primary"
+                    />
+                </div>
+
                 <Button type="submit" variant="primary">Create Badge</Button>
             </form>
             <div className="mt-6">
@@ -172,7 +185,7 @@ export const SiteSettingsSection: React.FC = () => {
         </div>
       </Card>
 
-      {/* BadgeCreatorPanel is now in ToolsSection */}
+      {/* BadgeCreatorPanel is now in ToolsSection and this is a conceptual placeholder */}
       {/* <BadgeCreatorPanel /> */}
 
       <div className="flex justify-end items-center mt-8 space-x-3">
