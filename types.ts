@@ -28,16 +28,17 @@ export enum CosmeticsSubCategory {
 export type BadgeCategory = 'Achievement' | 'Role' | 'Verification' | 'Event' | 'General';
 
 export interface UsernameColorTag {
-  id: string;
+  id: string; // UUID
   name: string;
   description?: string;
   cssClasses: string[]; // For text color, gradients
   effectClass?: string; // For animations like pulse, shimmer
   iconClass?: string; // e.g., Font Awesome class for an icon next to name
+  created_at?: string; // Supabase default
 }
 
 export interface Badge {
-  id: string;
+  id: string; // UUID
   name: string;
   description: string; 
   iconClass: string; 
@@ -45,41 +46,43 @@ export interface Badge {
   unlockCriteria: string; 
   value?: number; // Can be 0 or undefined
   category: BadgeCategory;
-  isVisible: boolean; // New property
+  isVisible: boolean; 
   usernameColorUnlock?: { 
     textClasses: string[]; 
     description: string; 
   };
-  colorTagId?: string; 
+  colorTagId?: string; // UUID, foreign key to username_color_tags.id
+  created_at?: string; // Supabase default
 }
 
 export interface PlayerStats {
-  speedNormal: number; // Time in seconds, lower is better
-  speedGlitched: number; // Time in seconds, lower is better
-  cosmeticsUnusuals: number; // Count, higher is better
-  cosmeticsAccessories: number; // Count, higher is better
-  timeAlive: number; // Total seconds, higher is better
+  speedNormal: number; 
+  speedGlitched: number; 
+  cosmeticsUnusuals: number; 
+  cosmeticsAccessories: number; 
+  timeAlive: number; 
 }
 
+// Player's 'id' will be the Supabase Auth user UUID.
+// Password is handled by Supabase Auth and not stored here.
 export interface Player {
-  id: string;
+  id: string; // UUID, references auth.users.id
   username: string;
   email?: string; 
   robloxId: string;
   robloxAvatarUrl?: string; 
   tier: TierLevel;
-  stats: PlayerStats;
-  badges: string[]; 
+  stats: PlayerStats; // This might be better as separate columns or JSONB in Supabase
+  badges: string[]; // Array of badge IDs (UUIDs)
   lastActive: Date;
-  clanId?: string;
-  password?: string;
+  clanId?: string; // UUID, foreign key to clans.id
 
   pronouns?: string;
   location?: string;
   bio?: string;
   customAvatarUrl?: string | null; 
-  customProfileBannerUrl?: string | null; // New: For custom profile banners (GIFs, etc.)
-  canSetCustomBanner?: boolean; // New: Permission to set custom banner
+  customProfileBannerUrl?: string | null; 
+  canSetCustomBanner?: boolean; 
   socialLinks?: {
     twitch?: string;
     youtube?: string;
@@ -87,27 +90,38 @@ export interface Player {
     discord?: string; 
     tiktok?: string;
   };
-  joinedDate?: Date; 
+  joinedDate?: Date; // Renamed from created_at from player table
   isVerifiedPlayer?: boolean; 
-  selectedUsernameTagId?: string; 
+  selectedUsernameTagId?: string; // UUID
   isBlacklisted?: boolean; 
+  // created_at is implicit from Supabase
 }
 
 export interface Clan {
-  id: string;
+  id: string; // UUID
   name: string;
   bannerUrl?: string;
   tag: string;
-  memberCount: number;
+  memberCount: number; // This might be a computed value or updated via trigger
   activityStatus: "Active" | "Inactive" | "Recruiting";
-  foundedDate: Date;
+  foundedDate: Date; // Corresponds to created_at from clans table
   discordLink?: string;
   description: string; 
   requirementsToJoin: string;
   isVerified: boolean;
-  leaderId: string;
-  members: string[]; 
+  leaderId: string; // UUID, foreign key to players.id (which is auth.users.id)
+  members: string[]; // Array of Player IDs (UUIDs), managed by clan_members table
+  created_at?: string; // Supabase default
 }
+
+export interface ClanMember {
+  clan_id: string; // UUID, foreign key to clans.id
+  player_id: string; // UUID, foreign key to players.id
+  role: 'Leader' | 'Co-Leader' | 'Officer' | 'Member';
+  joined_at: string; // ISO date string
+  id?: string; // Optional: if clan_members has its own primary key
+}
+
 
 export enum WorldRecordType {
   SPEED_NORMAL_FACILITY = "Speed - Normal - Facility",
@@ -124,24 +138,26 @@ export enum WorldRecordType {
 export type Region = "NA" | "EU" | "ASIA" | "OCE" | "SA";
 
 export interface WorldRecord {
-  id: string;
-  playerId: string;
+  id: string; // UUID
+  playerId: string; // UUID, foreign key to players.id
   type: WorldRecordType;
   value: number; 
   proofUrl: string; 
-  timestamp: Date;
+  timestamp: Date; // Corresponds to created_at from world_records table
   region?: Region;
   isVerified: boolean;
+  created_at?: string; // Supabase default
 }
 
 export interface ForumPost {
-  id: string;
-  clanId: string;
-  authorId: string; 
+  id: string; // UUID
+  clanId: string; // UUID, foreign key to clans.id
+  authorId: string; // UUID, foreign key to players.id
   title: string;
   content: string; 
-  timestamp: Date;
+  timestamp: Date; // Corresponds to created_at
   type: "Announcement" | "Recruitment" | "Achievement";
+  created_at?: string; // Supabase default
 }
 
 export enum SubmissionStatus {
@@ -153,36 +169,38 @@ export enum SubmissionStatus {
 export type SubmissionType = "ClanApplication" | "RecordVerification" | "BadgeProof" | "StatUpdateProof";
 
 export interface StatUpdateProofData {
-  playerId: string;
+  playerId: string; // UUID
   category: LeaderboardCategory;
   subCategory: SpeedSubCategory | CosmeticsSubCategory | string; 
   mapName?: string; 
   newValue: number;
   videoProofUrl: string;
-  imageProofName?: string; 
+  imageProofName?: string; // Name of file if uploaded to storage
   notes?: string;
 }
 
-export interface ClanApplicationData extends Omit<Clan, 'id' | 'memberCount' | 'members' | 'activityStatus' | 'foundedDate' | 'isVerified'> {
-  leaderId: string;
+export interface ClanApplicationData extends Omit<Clan, 'id' | 'memberCount' | 'members' | 'activityStatus' | 'foundedDate' | 'isVerified' | 'created_at'> {
+  leaderId: string; // UUID
 }
-export interface RecordVerificationData extends Omit<WorldRecord, 'id' | 'timestamp' | 'isVerified'> {}
-export interface BadgeProofData { badgeId: string; userId: string; proof: string }
+export interface RecordVerificationData extends Omit<WorldRecord, 'id' | 'timestamp' | 'isVerified' | 'created_at'> {}
+export interface BadgeProofData { badgeId: string; userId: string; proof: string } // badgeId and userId are UUIDs
 
 
 export type SubmissionData = ClanApplicationData | RecordVerificationData | BadgeProofData | StatUpdateProofData;
 
 export interface Submission<T extends SubmissionData> {
-  id: string;
+  id: string; // UUID
   type: SubmissionType;
   data: T;
-  submittedBy: string; 
-  submissionDate: Date;
+  submittedBy: string; // UUID, foreign key to players.id
+  submissionDate: Date; // Corresponds to created_at
   status: SubmissionStatus;
   moderatorReason?: string;
+  created_at?: string; // Supabase default
 }
 
 export interface SiteSettings {
+  id?: boolean; // For single row table
   theme: "dark" | "light";
   rulesPageContent: string; 
   faqPageContent: string; 
@@ -190,16 +208,19 @@ export interface SiteSettings {
   bannerImageUrl?: string;
   primaryButtonColor: string; 
   cardBorderRadius: string; 
+  leaderboardWeights: LeaderboardWeights; // Stored as JSONB
+  updated_at?: string; // Supabase default
 }
 
+// Credentials for Supabase Auth
 export interface LoginCredentials {
-  username: string;
+  email: string; // Supabase uses email for login by default
   password?: string; 
 }
 
 export interface SignUpCredentials extends LoginCredentials {
+    username: string; // Add username for our players table
     robloxId: string;
-    email?: string; 
 }
 
 export interface PlayerProfileUpdateData {
@@ -208,52 +229,58 @@ export interface PlayerProfileUpdateData {
     location?: string;
     bio?: string;
     customAvatarUrl?: string | null;
-    customProfileBannerUrl?: string | null; // New: Banner URL for profile update
+    customProfileBannerUrl?: string | null; 
     socialLinks?: Player['socialLinks'];
-    selectedUsernameTagId?: string;
+    selectedUsernameTagId?: string; // UUID
 }
 
 export interface Message {
-  id: string;
-  conversationId: string;
-  senderId: string; 
+  id: string; // UUID
+  conversationId: string; // UUID, foreign key to conversations.id
+  senderId: string; // UUID, foreign key to players.id
   text: string;
-  timestamp: Date;
+  timestamp: Date; // Corresponds to created_at
+  created_at?: string; // Supabase default
 }
 
 export interface UnreadCounts {
-  [participantId: string]: number; 
+  [participantId: string]: number; // participantId is UUID
 }
 
 export interface Conversation {
-  id: string;
-  participantIds: string[]; 
+  id: string; // UUID
+  participantIds: string[]; // Array of Player IDs (UUIDs)
   name?: string; 
   lastMessageText?: string;
   lastMessageTimestamp: Date;
-  lastMessageSenderId?: string;
-  unreadCountByParticipant?: UnreadCounts;
+  lastMessageSenderId?: string; // UUID
+  unreadCountByParticipant?: UnreadCounts; // Stored as JSONB
+  created_at?: string; // Supabase default
+  updated_at?: string; // Supabase default
 }
 
 export interface CollectionRank {
-  id: string;
+  id: string; // e.g. "cr_bronze"
   name: string;
   pointsRequired: number;
   description: string;
   imageUrl: string;
+  created_at?: string; // Supabase default
 }
 
 export type AnnouncementType = 'info' | 'success' | 'warning' | 'error';
 
 export interface Announcement {
-    id: string;
+    id: string; // UUID
     title: string;
     message: string;
     type: AnnouncementType;
-    creationDate: Date;
+    creationDate: Date; // Corresponds to created_at
     isDismissible: boolean;
-    isActive?: boolean; // For global display
-    displayUntil?: Date; // Optional expiry for display
+    isActive?: boolean; 
+    displayUntil?: Date; 
+    created_at?: string; // Supabase default
+    updated_at?: string; // Supabase default
 }
 
 export interface AppContextType {
@@ -264,81 +291,80 @@ export interface AppContextType {
   submissions: Submission<SubmissionData>[];
   siteSettings: SiteSettings;
   loading: boolean;
-  currentUser: Player | null;
+  currentUser: Player | null; // This will be enriched with data from 'players' table
   isAdmin: boolean;
   isStaff?: boolean; 
   
   usernameColorTags: UsernameColorTag[];
-  createUsernameColorTag: (tagData: Omit<UsernameColorTag, 'id'>) => void;
-  deleteUsernameColorTag: (tagId: string) => void;
+  createUsernameColorTag: (tagData: Omit<UsernameColorTag, 'id' | 'created_at'>) => Promise<{success: boolean, data?: UsernameColorTag, error?: any}>;
+  deleteUsernameColorTag: (tagId: string) => Promise<{success: boolean, error?: any}>;
 
-  loginUser: (credentials: LoginCredentials) => Promise<boolean>;
-  logoutUser: () => void;
-  signUpUser: (credentials: SignUpCredentials) => Promise<{success: boolean; message?: string}>;
+  loginUser: (credentials: LoginCredentials) => Promise<{success: boolean; message?: string}>;
+  logoutUser: () => Promise<void>;
+  signUpUser: (credentials: SignUpCredentials) => Promise<{success: boolean; message?: string, userId?: string}>;
   
-  // Player Admin Functions
-  createPlayer: (playerData: Pick<Player, 'username' | 'password' | 'robloxId' | 'email'>) => Promise<{success: boolean; message?: string; player?: Player}>;
+  createPlayer: (playerData: Pick<Player, 'username' | 'robloxId' | 'email'> & {password: string}) => Promise<{success: boolean; message?: string; player?: Player}>; // Used by admin
   createTestUser: (username: string) => Promise<{success: boolean; message: string; player?: Player}>; 
-  deletePlayer: (playerId: string) => void;
-  setPlayerBlacklistedStatus: (playerId: string, isBlacklisted: boolean) => void;
-  // togglePlayerCanSetCustomBanner: (playerId: string) => void; // This will be handled via updatePlayer
+  deletePlayer: (playerId: string) => Promise<{success: boolean, error?: any}>; // playerId is auth.users.id
+  setPlayerBlacklistedStatus: (playerId: string, isBlacklisted: boolean) => Promise<{success: boolean, error?: any}>;
 
-  updatePlayerTier: (playerId: string, tier: TierLevel) => void;
-  resetPlayerStats: (playerId: string) => void; 
-  addPlayerBadge: (playerId: string, badgeId: string) => void;
-  removePlayerBadge: (playerId: string, badgeId: string) => void;
-  updatePlayer: (player: Player) => Promise<{success: boolean; message?: string}>; 
-  updatePlayerProfile: (playerId: string, data: PlayerProfileUpdateData) => Promise<{success: boolean; message?: string}>; 
-  togglePlayerVerification: (playerId: string) => void;
+  updatePlayerTier: (playerId: string, tier: TierLevel) => Promise<{success: boolean, error?: any}>;
+  resetPlayerStats: (playerId: string) => Promise<{success: boolean, error?: any}>; 
+  addPlayerBadge: (playerId: string, badgeId: string) => Promise<{success: boolean, error?: any}>;
+  removePlayerBadge: (playerId: string, badgeId: string) => Promise<{success: boolean, error?: any}>;
+  updatePlayer: (playerData: Partial<Player> & {id: string}) => Promise<{success: boolean; message?: string, data?: Player}>; 
+  updatePlayerProfile: (playerId: string, data: PlayerProfileUpdateData, avatarFile?: File | null, bannerFile?: File | null) => Promise<{success: boolean; message?: string}>; 
+  togglePlayerVerification: (playerId: string, isVerified: boolean) => Promise<{success: boolean, error?: any}>;
 
-  approveClan: (clanId: string) => void;
-  rejectClan: (clanId: string, reason: string) => void;
-  toggleClanVerification: (clanId: string) => void;
-  addClan: (clanData: ClanApplicationData) => void;
+  approveClan: (clanId: string) => Promise<{success: boolean, error?: any}>;
+  rejectClan: (clanId: string, reason: string) => Promise<{success: boolean, error?: any}>;
+  toggleClanVerification: (clanId: string, isVerified: boolean) => Promise<{success: boolean, error?: any}>;
+  addClan: (clanData: ClanApplicationData) => Promise<{success: boolean, data?: Clan, error?: any}>; // data should be from ClanApplicationData
   
-  approveRecord: (recordId: string) => void;
-  rejectRecord: (recordId: string, reason: string) => void;
-  addWorldRecord: (record: RecordVerificationData) => void;
+  approveRecord: (recordId: string) => Promise<{success: boolean, error?: any}>;
+  rejectRecord: (recordId: string, reason: string) => Promise<{success: boolean, error?: any}>;
+  // addWorldRecord: (record: RecordVerificationData) => void; // This is done via submission
   
-  submitClanApplication: (clanData: Omit<Clan, 'id' | 'memberCount' | 'members' | 'activityStatus' | 'foundedDate' | 'isVerified' | 'leaderId'>, leaderId: string) => void;
-  submitRecord: (recordData: Omit<WorldRecord, 'id' | 'timestamp' | 'isVerified'>) => void;
-  submitStatUpdateProof: (data: StatUpdateProofData) => void;
-  processSubmission: (submissionId: string, newStatus: SubmissionStatus, reason?: string) => void;
+  submitClanApplication: (clanData: Omit<ClanApplicationData, 'leaderId'>, leaderId: string) => Promise<{success: boolean, error?: any}>;
+  submitRecord: (recordData: Omit<RecordVerificationData, 'playerId'>) => Promise<{success: boolean, error?: any}>;
+  submitStatUpdateProof: (data: Omit<StatUpdateProofData, 'playerId'>) => Promise<{success: boolean, error?: any}>;
+  processSubmission: (submissionId: string, newStatus: SubmissionStatus, reason?: string) => Promise<{success: boolean, error?: any}>;
   
-  createBadge: (badgeData: Omit<Badge, 'id'>) => void;
-  updateBadge: (badgeId: string, badgeData: Partial<Omit<Badge, 'id'>>) => void;
-  deleteBadge: (badgeId: string) => void; 
+  createBadge: (badgeData: Omit<Badge, 'id' | 'created_at'>) => Promise<{success: boolean, data?: Badge, error?: any}>;
+  updateBadge: (badgeId: string, badgeData: Partial<Omit<Badge, 'id' | 'created_at'>>) => Promise<{success: boolean, data?: Badge, error?: any}>;
+  deleteBadge: (badgeId: string) => Promise<{success: boolean, error?: any}>; 
 
-  updateSiteSettings: (settings: Partial<SiteSettings>) => void;
+  updateSiteSettings: (settings: Partial<SiteSettings>) => Promise<{success: boolean, error?: any}>;
 
   conversations: Conversation[];
   messages: Message[];
-  getConversationsForUser: (userId: string) => Conversation[];
-  getMessagesInConversation: (conversationId: string) => Message[];
-  sendMessage: (conversationId: string, text: string) => Promise<boolean>;
-  markMessagesAsRead: (conversationId: string, userId: string) => void;
+  getConversationsForUser: (userId: string) => Conversation[]; // This will now fetch from state updated by Supabase
+  getMessagesInConversation: (conversationId: string) => Message[]; // This will now fetch from state updated by Supabase
+  sendMessage: (conversationId: string, text: string) => Promise<{success: boolean, error?: any}>;
+  markMessagesAsRead: (conversationId: string, userId: string) => Promise<{success: boolean, error?: any}>;
   getUnreadMessagesCount: (userId: string) => number;
-  getOrCreateConversation: (participantIds: string[]) => Promise<string>; 
+  getOrCreateConversation: (participantIds: string[], groupName?: string) => Promise<string | null>; 
 
-  // Announcements
   announcements: Announcement[];
-  createAnnouncement: (announcementData: Omit<Announcement, 'id' | 'creationDate' | 'isActive'>) => Announcement;
-  updateAnnouncement: (announcement: Announcement) => void;
-  deleteAnnouncement: (announcementId: string) => void;
-  publishAnnouncement: (announcementId: string, durationMinutes?: number) => void; // Make active globally
-  dismissGlobalAnnouncement: (announcementId: string) => void;
+  createAnnouncement: (announcementData: Omit<Announcement, 'id' | 'creationDate' | 'isActive' | 'created_at' | 'updated_at'>) => Promise<{success: boolean, data?: Announcement, error?: any}>;
+  updateAnnouncement: (announcement: Partial<Announcement> & {id: string}) => Promise<{success: boolean, data?: Announcement, error?: any}>;
+  deleteAnnouncement: (announcementId: string) => Promise<{success: boolean, error?: any}>;
+  publishAnnouncement: (announcementId: string, durationMinutes?: number) => Promise<{success: boolean, error?: any}>;
+  dismissGlobalAnnouncement: (announcementId: string) => Promise<{success: boolean, error?: any}>;
   getActiveGlobalAnnouncements: () => Announcement[];
 
-  // Leaderboard Settings
   leaderboardWeights: LeaderboardWeights;
-  updateLeaderboardWeights: (newWeights: LeaderboardWeights) => void;
+  updateLeaderboardWeights: (newWeights: LeaderboardWeights) => Promise<{success: boolean, error?: any}>;
 
-  // Admin Commands
   executeAdminCommand: (command: string) => Promise<{success: boolean, message: string}>;
-  refreshLeaderboard: () => Promise<void>;
-  resetLeaderboardForSeason: () => Promise<void>;
+  refreshLeaderboard: () => Promise<void>; // May need to be async if it hits Supabase
+  resetLeaderboardForSeason: () => Promise<void>; // May need to be async
 }
 
 export type SortOptionPlayer = keyof PlayerStats | "lastActive"; 
 export type SortOptionClan = "name" | "memberCount" | "activityStatus" | "foundedDate";
 export type SortOptionRecord = "value" | "timestamp" | "type";
+
+// This Database type will be generated by `supabase gen types typescript --project-id <your-project-id> > types/supabase.ts`
+// It is moved to types/supabase.ts to be correctly picked up by the Supabase client.
+// export interface Database { /* ... */ } removed from here

@@ -1,4 +1,3 @@
-
 import React, { useState, ChangeEvent, FormEvent, useMemo } from 'react';
 import { Modal } from '../ui/Modal';
 import { Input, TextArea } from '../ui/Input';
@@ -64,6 +63,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
       if (file.size > MAX_AVATAR_SIZE_MB * 1024 * 1024) {
         setError(`Avatar image must be less than ${MAX_AVATAR_SIZE_MB}MB.`);
         setCustomAvatarFile(null);
+        // e.target.value = ''; // Clear the input
         return;
       }
       setError(null);
@@ -78,6 +78,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
        if (file.size > MAX_BANNER_SIZE_MB * 1024 * 1024) {
         setError(`Banner image must be less than ${MAX_BANNER_SIZE_MB}MB.`);
         setCustomBannerFile(null);
+        // e.target.value = ''; // Clear the input
         return;
       }
       setError(null);
@@ -100,40 +101,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
         setIsLoading(false);
         return;
     }
-
-    let finalAvatarUrl: string | null | undefined = player.customAvatarUrl; 
-    if (customAvatarFile) { 
-        try {
-            finalAvatarUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = (err) => reject(err);
-                reader.readAsDataURL(customAvatarFile);
-            });
-        } catch (readError) {
-            setError("Could not process avatar image.");
-            setIsLoading(false); return;
-        }
-    } else if (customAvatarPreview === null) { 
-        finalAvatarUrl = null;
-    }
-
-    let finalBannerUrl: string | null | undefined = player.customProfileBannerUrl;
-    if (customBannerFile && player.canSetCustomBanner) {
-        try {
-            finalBannerUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = (err) => reject(err);
-                reader.readAsDataURL(customBannerFile);
-            });
-        } catch (readError) {
-             setError("Could not process banner image.");
-             setIsLoading(false); return;
-        }
-    } else if (customBannerPreview === null && player.canSetCustomBanner) {
-        finalBannerUrl = null;
-    }
     
     const updateData: PlayerProfileUpdateData = {
       username: username.trim(),
@@ -141,13 +108,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
       location: location.trim() || undefined,
       bio: bio.trim() || undefined,
       socialLinks,
-      customAvatarUrl: finalAvatarUrl,
-      customProfileBannerUrl: player.canSetCustomBanner ? finalBannerUrl : player.customProfileBannerUrl, // Only update if allowed
+      // Pass null if preview is null (meaning user wants to remove it), otherwise undefined (meaning no change from file)
+      customAvatarUrl: customAvatarPreview === null ? null : undefined, 
+      customProfileBannerUrl: player.canSetCustomBanner && customBannerPreview === null ? null : undefined,
       selectedUsernameTagId: selectedTagId || undefined,
     };
 
     try {
-        const result = await updatePlayerProfile(player.id, updateData);
+        // Pass the File objects directly to the context function
+        const result = await updatePlayerProfile(player.id, updateData, customAvatarFile, customBannerFile);
         if (result.success) {
             onClose(); 
         } else {

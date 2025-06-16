@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Clan, Player } from '../../types';
@@ -50,7 +51,7 @@ export const ClanProfilePage: React.FC = () => {
             </div>
             <div className="mt-4 md:mt-0 flex space-x-2">
                 {isAdmin && (
-                    <Button variant={clan.isVerified ? "danger" : "primary"} size="sm" onClick={() => toggleClanVerification(clan.id)}>
+                    <Button variant={clan.isVerified ? "danger" : "primary"} size="sm" onClick={() => toggleClanVerification(clan.id, !clan.isVerified)}>
                         {clan.isVerified ? "Unverify" : "Verify Clan"}
                     </Button>
                 )}

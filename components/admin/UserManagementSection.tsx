@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Player, TierLevel, Badge as BadgeType, PlayerStats } from '../../types';
 import { useAppContext } from '../../contexts/AppContext';
@@ -387,7 +388,7 @@ export const UserManagementSection: React.FC = () => {
                     <Button
                         size="xs"
                         variant={player.isVerifiedPlayer ? "primary" : "ghost"}
-                        onClick={() => togglePlayerVerification(player.id)}
+                        onClick={() => togglePlayerVerification(player.id, player.isVerifiedPlayer || false)}
                         className={`${player.isVerifiedPlayer ? "bg-green-600 hover:bg-green-700" : "border-gray-600"} !py-0.5`}
                     >
                         {player.isVerifiedPlayer ? 'Verified' : 'Unverified'}

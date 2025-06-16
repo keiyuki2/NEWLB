@@ -48,13 +48,18 @@ export const COLLECTION_RANKS: CollectionRank[] = [
   { id: "cr_radiant_nexus", name: "Radiant Nexus", pointsRequired: 20000, description: "Badge god. Limited flex status.", imageUrl: "https://media.discordapp.net/attachments/1332299182626574356/1379761740228722718/Radiant_Nexus_.png?ex=6842bc41&is=68416ac1&hm=311a1152c8eb9efc60a6741d1bf6332cc98a43f563cf7f2077101718ed2d6c56&=&format=webp&quality=lossless" },
 ];
 
+export const INITIAL_LEADERBOARD_WEIGHTS: LeaderboardWeights = {
+  [LeaderboardCategory.SPEED]: 60,
+  [LeaderboardCategory.COSMETICS]: 40,
+};
+
 export const MOCK_PLAYERS: Player[] = [
   {
     id: "admin_user_noah", username: "Noah", email: "tuvsheenee916@gmail.com", robloxId: "1356770784",
     tier: TierLevel.T1, 
     stats: { speedNormal: 90, speedGlitched: 70, cosmeticsUnusuals: 20, cosmeticsAccessories: 50, timeAlive: 36000 },
     badges: ["game_admin", "beta_tester", "event_winner_s1", "speed_demon", "collector_adept", "test_badge_hidden", "staff_badge"],
-    lastActive: new Date(), password: "FM)dj19uqfn8!U^+",
+    lastActive: new Date(),
     pronouns: "He/Him", location: "USA", bio: "Keeping Evade fair and fun! I'm the lead admin for Evade Competitive.", joinedDate: new Date("2023-01-01"),
     customAvatarUrl: null, 
     customProfileBannerUrl: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWY3NWEzN2YxMzA1YTI2OTZkZDE1NTA5NzkxMGNmZjY1MDU1NDRjZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/pVic3wqQx7wkxXMhv7/giphy.gif", // Example banner for admin
@@ -191,6 +196,7 @@ While video is primary, high-quality screenshots can supplement your submission 
   bannerImageUrl: "https://picsum.photos/seed/sitebanner/1200/300",
   primaryButtonColor: "#7C3AED",
   cardBorderRadius: "rounded-lg",
+  leaderboardWeights: INITIAL_LEADERBOARD_WEIGHTS,
 };
 
 export const MOCK_SUBMISSIONS: Submission<SubmissionData>[] = [];
@@ -296,10 +302,6 @@ export const STAT_METRIC_UNITS: Record<LeaderboardCategory, Partial<Record<Speed
     },
 };
 
-export const INITIAL_LEADERBOARD_WEIGHTS: LeaderboardWeights = {
-  [LeaderboardCategory.SPEED]: 60,
-  [LeaderboardCategory.COSMETICS]: 40,
-};
 
 export const getCategoryFromWorldRecordType = (recordType: WorldRecordType): LeaderboardCategory | null => {
   if (recordType.startsWith(LeaderboardCategory.SPEED)) return LeaderboardCategory.SPEED;

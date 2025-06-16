@@ -1,7 +1,8 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
-import { WorldRecordType, Region, LeaderboardCategory } from '../../types';
+import { WorldRecordType, Region, LeaderboardCategory, RecordVerificationData } from '../../types';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { Select } from '../ui/Select';
@@ -85,13 +86,13 @@ export const RecordSubmissionForm: React.FC<RecordSubmissionFormProps> = ({ onCl
         return;
     }
 
-    submitRecord({
-      playerId: currentUser.id,
+    const recordDataToSubmit: Omit<RecordVerificationData, 'playerId'> = {
       type: finalRecordType,
       value: numericValue,
       proofUrl,
       region: region || undefined,
-    });
+    };
+    submitRecord(recordDataToSubmit);
 
     setSuccess(`Record submission for "${finalRecordType.replace(/-/g, ' ')}" submitted! It will be reviewed by moderators.`);
     setTimeout(() => {

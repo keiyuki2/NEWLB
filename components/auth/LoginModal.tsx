@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
@@ -14,7 +15,7 @@ interface LoginModalProps {
 
 export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitchToSignUp }) => {
   const { loginUser } = useAppContext();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // Changed from username to email
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,13 +25,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitc
     setError(null);
     setIsLoading(true);
     try {
-      const success = await loginUser({ username, password });
-      if (success) {
+      // Pass email to loginUser
+      const result = await loginUser({ email, password }); 
+      if (result.success) {
         onClose(); // Close modal on successful login
-        setUsername('');
+        setEmail('');
         setPassword('');
       } else {
-        setError("Invalid username or password. Please try again.");
+        setError(result.message || "Invalid email or password. Please try again.");
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again later.");
@@ -42,7 +44,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitc
 
   // Clear form on close
   const handleClose = () => {
-    setUsername('');
+    setEmail('');
     setPassword('');
     setError(null);
     setIsLoading(false);
@@ -54,12 +56,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSwitc
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
         <Input
-          id="login-username"
-          label="Username"
-          type="text"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter your username"
+          id="login-email" // Changed id
+          label="Email" // Changed label
+          type="email" // Changed type to email
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email" // Changed placeholder
           required
           autoFocus
         />
